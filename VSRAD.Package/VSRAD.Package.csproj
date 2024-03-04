@@ -130,7 +130,7 @@
     <Compile Include="BuildTools\Errors\Parser.cs" />
     <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
-    <Compile Include="Commands\BreakpointMenuCommand.cs" />
+    <Compile Include="Commands\DebugMenuCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\TargetProcessorDropdownCommand.cs" />
     <Compile Include="Commands\ProfileDropdownCommand.cs" />

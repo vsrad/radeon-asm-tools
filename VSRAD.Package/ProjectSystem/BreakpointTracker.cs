@@ -66,7 +66,7 @@ namespace VSRAD.Package.ProjectSystem
     {
         Result<BreakTarget> GetTarget(string mainFile, BreakTargetSelector mode);
         void UpdateOnBreak(BreakTarget breakTarget, IReadOnlyList<BreakpointInfo> validBreakpoints);
-        void SetRunToLine(string mainFile, uint line);
+        void SetRunToLine(string mainFile, string targetFile, uint line);
         void ResetTargets();
     }
 
@@ -99,9 +99,9 @@ namespace VSRAD.Package.ProjectSystem
             });
         }
 
-        public void SetRunToLine(string file, uint line)
+        public void SetRunToLine(string mainFile, string targetFile, uint line)
         {
-            _lastTarget[file] = (File: file, Line: line, Breakpoint: null, ForceRunToLine: true);
+            _lastTarget[mainFile] = (File: targetFile, Line: line, Breakpoint: null, ForceRunToLine: true);
         }
 
         public void ResetTargets()

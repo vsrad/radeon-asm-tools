@@ -16,7 +16,6 @@
                     <x:Type TypeName="viz:ScalingMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
-            <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ControlStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
@@ -78,12 +77,6 @@
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="3D NDRange" VerticalAlignment="Center" Padding="4,0,0,0"
                             IsChecked="{Binding Options.VisualizerOptions.NDRange3D, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Height="25">
-                    <CheckBox Content="Check Magic Number in System lane 0" VerticalAlignment="Center" Padding="4,0,0,0"
-                            IsChecked="{Binding Options.VisualizerOptions.CheckMagicNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBox Width="100" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0" Height="22" VerticalContentAlignment="Center"
-                             Text="{Binding Options.VisualizerOptions.MagicNumber, Converter={StaticResource MagicNumberConverter}, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Autosave opened files" VerticalAlignment="Center" Padding="4,0,0,0"

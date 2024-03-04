@@ -27,9 +27,12 @@ namespace VSRAD.Package.ProjectSystem
     public interface IProjectSourceManager
     {
         string ProjectRoot { get; }
+        string DebugStartupPath { get; set; }
+
         void SaveProjectState();
         void SaveDocuments(DocumentSaveType type);
         void OpenDocument(string path, uint? line);
+        IEnumerable<string> GetOpenDocuments();
         IVsTextBuffer GetDocumentTextBufferByPath(string path);
         IEditorView GetActiveEditorView();
         Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
@@ -42,6 +45,8 @@ namespace VSRAD.Package.ProjectSystem
         public const string NoFilesOpenError = "No files open in the editor.";
 
         public string ProjectRoot { get; }
+
+        public string DebugStartupPath { get; set; }
 
         private readonly IProject _project;
         private readonly SVsServiceProvider _serviceProvider;
@@ -119,6 +124,15 @@ namespace VSRAD.Package.ProjectSystem
         public void OpenDocument(string path, uint? line)
         {
             VsEditor.OpenFileInEditor(_serviceProvider, path, line, null, forceOppositeTab: false, preserveActiveDoc: false);
+        }
+
+        public IEnumerable<string> GetOpenDocuments()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Assumes.Present(_runningDocumentTable);
+            foreach (var document in _runningDocumentTable)
+                if ((document.Flags & (uint)_VSRDTFLAGS.RDT_VirtualDocument) == 0 && document.ProjectGuid != Guid.Empty && !string.IsNullOrEmpty(document.Moniker))
+                    yield return document.Moniker;
         }
 
         public IVsTextBuffer GetDocumentTextBufferByPath(string path)

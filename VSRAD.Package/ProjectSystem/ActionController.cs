@@ -149,9 +149,10 @@ namespace VSRAD.Package.ProjectSystem
         {
             var activeEditor = _projectSourceManager.GetActiveEditorView();
             var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
+            var debugFile = _projectSourceManager.DebugStartupPath ?? activeFile;
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            var breakTarget = _breakpointTracker.GetTarget(activeFile, debugBreakTarget);
-            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, _project.Options.TargetProcessor);
+            var breakTarget = _breakpointTracker.GetTarget(debugFile, debugBreakTarget);
+            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, debugFile, _project.Options.TargetProcessor);
 
             try
             {
@@ -177,8 +178,7 @@ namespace VSRAD.Package.ProjectSystem
                 _projectSourceManager.SaveProjectState();
 
                 var continueOnError = _project.Options.Profile.General.ContinueActionExecOnError;
-                var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget, checkMagicNumber);
+                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, continueOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
                 return runResult;

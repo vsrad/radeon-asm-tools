@@ -71,8 +71,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 case nameof(VisualizerContext.BreakState):
                 case nameof(VisualizerContext.WavemapSelection):
                 case nameof(Options.VisualizerOptions.MaskLanes):
-                case nameof(Options.VisualizerOptions.CheckMagicNumber):
-                case nameof(Options.VisualizerOptions.MagicNumber):
                 case nameof(Options.VisualizerOptions.WavemapElementSize):
                     DrawImage();
                     break;

@@ -24,7 +24,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 w3 => Assert.Equal(new Watch("v2", new VariableType(VariableCategory.Float, 32)), w3));
 
             Assert.Equal(42u, imported.DebuggerOptions.Counter);
-            Assert.Equal((uint)0x313313, imported.VisualizerOptions.MagicNumber);
             Assert.Equal("0-3:16-19:32-35:48-51:64-67:80-83:96-99:112-115:128-131:144-147:160-163:176-179:192-195:208-211:224-227:240-243:256-259:272-275:288-291:304-307:320-323:336-339:352-355:368-371:384-387:400-403:416-419:432-435:448-451:464-467:480-483:496-499",
                 imported.VisualizerColumnStyling.VisibleColumns);
             Assert.Equal("miho", imported.ActiveProfile);

@@ -19,10 +19,10 @@
         </Strings>
       </Menu>
       <!-- Tools -> RAD Debug -> Actions -->
-      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="100" type="Menu">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
+      <Menu guid="guidCmdSetActionListMenu" id="ActionListMenuId" priority="100" type="Menu">
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup"/>
         <Strings>
-          <ButtonText>Actions</ButtonText>
+          <ButtonText>Run...</ButtonText>
         </Strings>
       </Menu>
       <!-- View -> Toolbars -> RAD Debug -->
@@ -53,8 +53,8 @@
 
     <Buttons>
       <!-- Tool window commands -->
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowVisualizerCommandId" priority="1" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+      <Button guid="guidCmdSetToolWindowMenu" id="ToolWindowVisualizerCommandId" priority="1" type="Button">
+        <Parent guid="guidCmdSetToolWindowMenu" id="ToolWindowMenuGroup" />
         <Icon guid="guidImages" id="visualizerIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -65,7 +65,7 @@
         </Strings>
       </Button>
       <!--
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
+      <Button guid="guidCmdSetToolWindowMenu" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="visualizerIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -77,8 +77,8 @@
         </Strings>
       </Button>
       -->
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+      <Button guid="guidCmdSetToolWindowMenu" id="ToolWindowOptionsCommandId" priority="3" type="Button">
+        <Parent guid="guidCmdSetToolWindowMenu" id="ToolWindowMenuGroup" />
         <Icon guid="guidImages" id="optionsIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -88,18 +88,20 @@
           <LocCanonicalName>RadDebug.Options</LocCanonicalName>
         </Strings>
       </Button>
-      <!-- Tools menu -->
-      <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="4" type="Button">
-        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
-        <CommandFlag>DynamicItemStart</CommandFlag>
+      <Button guid="guidCmdSetToolWindowMenu" id="ToolWindowFloatInspectorCommandId" priority="4" type="Button">
+        <Parent guid="guidCmdSetToolWindowMenu" id="ToolWindowMenuGroup" />
+        <Icon guid="guidImages" id="floatInspectorIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>(No actions available)</ButtonText>
+          <ButtonText>Float Inspector</ButtonText>
+          <CanonicalName>RadDebug.FloatInspector</CanonicalName>
+          <LocCanonicalName>RadDebug.FloatInspector</LocCanonicalName>
         </Strings>
       </Button>
+      <!-- Actions menu -->
       <Button guid="guidCmdSetActionsMenu" id="ProfileCommandId" priority="5" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <Icon guid="guidImages" id="profilerIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -111,7 +113,7 @@
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="6" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <Icon guid="guidImages" id="disassembleIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -123,7 +125,7 @@
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="7" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <Icon guid="guidImages" id="preprocessIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -135,7 +137,7 @@
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DebugActionCommandId" priority="8" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <Icon guid="guidImages" id="debugActionIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -147,7 +149,7 @@
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="RerunDebugCommandId" priority="9" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <Icon guid="guidImages" id="rerunDebugActionIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -159,7 +161,7 @@
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="ReverseDebugCommandId" priority="10" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <Icon guid="guidImages" id="reverseDebugActionIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -170,8 +172,18 @@
           <LocCanonicalName>RadDebug.ReverseDebug</LocCanonicalName>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetBreakpointMenu" id="ToggleMultipleBreakpointsCommandId" priority="11" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+      <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="11" type="Button">
+        <Parent guid="guidCmdSetActionListMenu" id="ActionListMenuGroup" />
+        <CommandFlag>DynamicItemStart</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>(No actions available)</ButtonText>
+        </Strings>
+      </Button>
+      <!-- Breakpoint settings menu -->
+      <Button guid="guidCmdSetDebugMenu" id="DebugMultipleBreakpointsCommandId" priority="2" type="Button">
+        <Parent guid="guidCmdSetDebugMenu" id="DebugMenuGroup" />
         <Icon guid="guidImages" id="multipleBreakpointsIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -180,17 +192,6 @@
           <ButtonText>Multiple breakpoints</ButtonText>
           <CanonicalName>RadDebug.ToggleMultipleBreakpoints</CanonicalName>
           <LocCanonicalName>RadDebug.ToggleMultipleBreakpoints</LocCanonicalName>
-        </Strings>
-      </Button>
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowFloatInspectorCommandId" priority="101" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="floatInspectorIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Float Inspector</ButtonText>
-          <CanonicalName>RadDebug.FloatInspector</CanonicalName>
-          <LocCanonicalName>RadDebug.FloatInspector</LocCanonicalName>
         </Strings>
       </Button>
       <!-- Editor context menu -->
@@ -269,8 +270,18 @@
       <Group guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0600">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
       </Group>
-      <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="0x0600">
-        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuId" />
+      <Group guid="guidCmdSetToolWindowMenu" id="ToolWindowMenuGroup" priority="1">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
+      </Group>
+      <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="2">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
+      </Group>
+      <Group guid="guidCmdSetDebugMenu" id="DebugMenuGroup" priority="4">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
+      </Group>
+      <!-- Actions menu -->
+      <Group guid="guidCmdSetActionListMenu" id="ActionListMenuGroup" priority="1">
+        <Parent guid="guidCmdSetActionListMenu" id="ActionListMenuId" />
       </Group>
       <!-- Editor context menu -->
       <Group guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" priority="0x0600">
@@ -290,7 +301,17 @@
     </Groups>
 
     <Combos>
-       <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="115" idCommandList="ProfileTargetMachineDropdownListId">
+      <Combo guid="guidCmdSetDebugMenu" id="DebugFileDropdownId" priority="1" type="IndexCombo" defaultWidth="220" idCommandList="DebugFileDropdownListId">
+        <Parent guid="guidCmdSetDebugMenu" id="DebugMenuGroup" />
+        <CommandFlag>IconAndText</CommandFlag>
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Debug:</ButtonText>
+        </Strings>
+      </Combo>
+      <!--<Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="115" idCommandList="ProfileTargetMachineDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -299,7 +320,7 @@
           <ButtonText>Target Host</ButtonText>
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
-      </Combo>
+      </Combo>-->
       <Combo guid="guidCmdSetTargetProcessorDropdown" id="TargetProcessorDropdownId" priority="110" type="DynamicCombo" defaultWidth="105" idCommandList="TargetProcessorDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>
@@ -322,6 +343,15 @@
     <CommandPlacement guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0100">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
     </CommandPlacement>
+    <CommandPlacement guid="guidCmdSetToolWindowMenu" id="ToolWindowMenuGroup" priority="1">
+      <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
+    </CommandPlacement>
+    <CommandPlacement guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="2">
+      <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
+    </CommandPlacement>
+    <CommandPlacement guid="guidCmdSetDebugMenu" id="DebugMenuGroup" priority="4">
+      <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
+    </CommandPlacement>
     <CommandPlacement guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0100">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
     </CommandPlacement>
@@ -340,28 +370,48 @@
       <IDSymbol name="ToolsMenuGroup" value="0x0600" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidCmdSetActionsMenu" value="{7CF54FFE-BCAC-4751-BEEC-D103FD953C8B}">
-      <IDSymbol name="ActionsMenuId" value="0x900" />
-      <IDSymbol name="ActionsMenuGroup" value="0x0700" />
+    <GuidSymbol name="guidCmdSetToolWindowMenu" value="{03C8F3BA-2E44-4159-AC37-B08FC295A0CC}">
+      <IDSymbol name="ToolWindowMenuId" value="0x1021" />
+      <IDSymbol name="ToolWindowMenuGroup" value="0x0600" />
+      <IDSymbol name="ToolWindowVisualizerCommandId" value="0x0100" />
+      <IDSymbol name="ToolWindowSliceVisualizerCommandId" value="0x0102" />
+      <IDSymbol name="ToolWindowOptionsCommandId" value="0x0101" />
+      <IDSymbol name="ToolWindowFloatInspectorCommandId" value="0x0103" />
+    </GuidSymbol>
 
-      <IDSymbol name="ActionCommandId" value="0x100" />
+    <GuidSymbol name="guidCmdSetActionsMenu" value="{7CF54FFE-BCAC-4751-BEEC-D103FD953C8B}">
+      <IDSymbol name="ActionsMenuId" value="0x1020" />
+      <IDSymbol name="ActionsMenuGroup" value="0x0700" />
       <IDSymbol name="ProfileCommandId" value="0x10" />
       <IDSymbol name="DisassembleCommandId" value="0x11" />
       <IDSymbol name="PreprocessCommandId" value="0x12" />
       <IDSymbol name="DebugActionCommandId" value="0x13" />
       <IDSymbol name="RerunDebugCommandId" value="0x14" />
       <IDSymbol name="ReverseDebugCommandId" value="0x15" />
+      <IDSymbol name="ActionCommandId" value="0x100" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidCmdSetBreakpointMenu" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
-      <IDSymbol name="ToggleMultipleBreakpointsCommandId" value="0x10" />
+    <GuidSymbol name="guidCmdSetActionListMenu" value="{121A20EF-506D-4F62-A360-3E799A7D479E}">
+      <IDSymbol name="ActionListMenuId" value="0x1010" />
+      <IDSymbol name="ActionListMenuGroup" value="0x0700" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
-      <IDSymbol name="ToolWindowVisualizerCommandId" value="0x0100" />
-      <IDSymbol name="ToolWindowOptionsCommandId" value="0x0101" />
-      <IDSymbol name="ToolWindowSliceVisualizerCommandId" value="0x0102" />
-      <IDSymbol name="ToolWindowFloatInspectorCommandId" value="0x0103" />
+    <GuidSymbol name="guidCmdSetDebugMenu" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
+      <IDSymbol name="DebugMenuId" value="0x1010" />
+      <IDSymbol name="DebugMenuGroup" value="0x0700" />
+      <IDSymbol name="DebugMultipleBreakpointsCommandId" value="0x10" />
+      <IDSymbol name="DebugFileDropdownId" value="0x100" />
+      <IDSymbol name="DebugFileDropdownListId" value="0x101" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
+      <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
+      <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetTargetProcessorDropdown" value="{E42D9A90-0657-4A20-B110-9B138039E044}">
+      <IDSymbol name="TargetProcessorDropdownId" value="0x10" />
+      <IDSymbol name="TargetProcessorDropdownListId" value="0x100" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetFRTC" value="{cefc8250-7cd1-46c1-b4f6-46a0a22a1c81}">
@@ -384,15 +434,6 @@
       <IDSymbol value="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>" name="AddArrayToWatchesFrom<#=i #>To<#= j #>Id" />
 <# } #>
 <# } #>
-    </GuidSymbol>
-
-    <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
-      <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
-      <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />
-    </GuidSymbol>
-    <GuidSymbol name="guidCmdSetTargetProcessorDropdown" value="{E42D9A90-0657-4A20-B110-9B138039E044}">
-      <IDSymbol name="TargetProcessorDropdownId" value="0x10" />
-      <IDSymbol name="TargetProcessorDropdownListId" value="0x100" />
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{654146df-5335-4701-a9c2-73e8cb4d3bdf}">

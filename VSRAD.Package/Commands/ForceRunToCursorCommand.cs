@@ -39,7 +39,8 @@ namespace VSRAD.Package.Commands
             {
                 var activeEditor = _projectSourceManager.GetActiveEditorView();
                 var (currentFile, currentLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
-                _breakpointTracker.SetRunToLine(currentFile, currentLine);
+                var debugFile = _projectSourceManager.DebugStartupPath ?? currentFile;
+                _breakpointTracker.SetRunToLine(debugFile, currentFile, currentLine);
                 _debuggerIntegration.Execute(step: false);
             }
         }

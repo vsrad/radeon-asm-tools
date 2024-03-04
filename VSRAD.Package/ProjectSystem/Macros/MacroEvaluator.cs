@@ -17,14 +17,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
+        public string DebugStartupPath { get; }
         public string TargetProcessor { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string targetProcessor = "", string sourceDir = null, string sourceFile = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string debugPath = "", string targetProcessor = "", string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
             ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
             ActiveSourceLine = sourceLine;
+            DebugStartupPath = debugPath;
             TargetProcessor = targetProcessor;
         }
     }
@@ -52,6 +54,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
         public const string DebugAppArgs = "RadDebugAppArgs";
         public const string DebugBreakArgs = "RadDebugBreakArgs";
+        public const string DebugStartupPath = "RadDebugStartupPath";
         public const string TargetProcessor = "RadTargetProcessor";
     }
 
@@ -112,6 +115,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.ActiveSourceFileLine: value = _transientValues.ActiveSourceLine.ToString(); break;
                 case RadMacros.DebugAppArgs: value = _debuggerOptions.AppArgs; break;
                 case RadMacros.DebugBreakArgs: value = _debuggerOptions.BreakArgs; break;
+                case RadMacros.DebugStartupPath: value = _transientValues.DebugStartupPath; break;
                 case RadMacros.TargetProcessor:
                     if (!(await EvaluateAsync(_transientValues.TargetProcessor, evaluationChain)).TryGetResult(out value, out var error))
                         return error;
