@@ -137,6 +137,7 @@ namespace VSRAD.Package.Options
             {
                 ProfileName = ProfileName,
                 RunActionsLocally = RunActionsLocally,
+                ContinueActionExecOnError = ContinueActionExecOnError,
                 LocalWorkDir = evaluatedLocalDir,
                 RemoteWorkDir = evaluatedRemoteDir,
                 DefaultTargetProcessor = DefaultTargetProcessor

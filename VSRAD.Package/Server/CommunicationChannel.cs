@@ -24,9 +24,9 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        OSPlatform ServerPlatform { get; }
-
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
+
+        Task<OSPlatform> GetRemotePlatformAsync();
 
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
 
@@ -80,8 +80,6 @@ namespace VSRAD.Package.Server
             }
         }
 
-        public OSPlatform ServerPlatform { get; private set; }
-
         private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 5);
 
         private readonly SemaphoreSlim _sendMutex = new SemaphoreSlim(1);
@@ -90,6 +88,7 @@ namespace VSRAD.Package.Server
 
         private Version _extensionVersion;
         private TcpClient _connection;
+        private OSPlatform _remotePlatform;
         private IReadOnlyDictionary<string, string> _remoteEnvironment;
 
         [ImportingConstructor]
@@ -150,11 +149,16 @@ namespace VSRAD.Package.Server
             }
         }
 
+        public async Task<OSPlatform> GetRemotePlatformAsync()
+        {
+            await EstablishServerConnectionAsync().ConfigureAwait(false);
+            return _remotePlatform;
+        }
+
         public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()
         {
             if (_remoteEnvironment == null)
             {
-                await EstablishServerConnectionAsync().ConfigureAwait(false);
                 var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables()).ConfigureAwait(false);
                 _remoteEnvironment = environment.Variables;
             }
@@ -200,7 +204,7 @@ namespace VSRAD.Package.Server
                     throw new UnsupportedExtensionVersionException(ConnectionOptions, versionResponse.ServerVersion);
                 if (versionResponse.ServerVersion < Constants.MinimalRequiredServerVersion)
                     throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
-                ServerPlatform = versionResponse.ServerPlatform;
+                _remotePlatform = versionResponse.ServerPlatform;
             }
             catch (Exception)
             {
