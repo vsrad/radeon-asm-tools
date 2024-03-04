@@ -18,7 +18,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var breakState = new BreakState(BreakTarget.Empty, new Dictionary<string, WatchMeta>(),
                 new BreakStateDispatchParameters(waveSize: (uint)waveSize, gridX: (uint)groupSize, gridY: 1, gridZ: 1, groupX: (uint)groupSize, groupY: 1, groupZ: 1, ""),
                 new Dictionary<uint, uint>(), dwordsPerLane: 1,
-                new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: system.Length), checkMagicNumber, systemBytes);
+                new BreakStateOutputFile("", false, 0, default, dwordCount: system.Length), checkMagicNumber, systemBytes);
             _ = breakState.ChangeGroupWithWarningsAsync(null, groupIndex: 0).Result;
             return breakState;
         }

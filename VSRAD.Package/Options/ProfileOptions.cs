@@ -89,12 +89,12 @@ namespace VSRAD.Package.Options
         [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
         public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
 
-        public async Task<Result<ActionProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        public async Task<Result<ActionProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients)
         {
             var evaluated = new ActionProfileOptions { Name = Name };
             foreach (var step in Steps)
             {
-                if ((await step.EvaluateAsync(evaluator, profile, Name)).TryGetResult(out var evaluatedStep, out var error))
+                if ((await step.EvaluateAsync(evaluator, transients, Name)).TryGetResult(out var evaluatedStep, out var error))
                     evaluated.Steps.Add(evaluatedStep);
                 else
                     return error;

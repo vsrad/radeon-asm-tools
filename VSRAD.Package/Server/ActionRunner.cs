@@ -18,15 +18,11 @@ namespace VSRAD.Package.Server
 {
     public sealed class ActionEnvironment
     {
-        public string LocalWorkDir { get; }
-        public string RemoteWorkDir { get; }
         public IReadOnlyList<string> Watches { get; }
         public Result<BreakTarget> BreakTarget { get; }
 
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir, IReadOnlyList<string> watches = null, Result<BreakTarget> breakTarget = null)
+        public ActionEnvironment(IReadOnlyList<string> watches = null, Result<BreakTarget> breakTarget = null)
         {
-            LocalWorkDir = localWorkDir;
-            RemoteWorkDir = remoteWorkDir;
             Watches = watches ?? Array.Empty<string>();
             BreakTarget = breakTarget ?? ProjectSystem.BreakTarget.Empty;
         }
@@ -97,15 +93,11 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
         {
-            IList<FileMetadata> sourceFiles;
+            IList<FileMetadata> sourceFiles, targetFiles;
+            // List all source files
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
-                var command = new ListFilesCommand
-                {
-                    Path = step.SourcePath,
-                    WorkDir = _environment.RemoteWorkDir,
-                    IncludeSubdirectories = step.IncludeSubdirectories
-                };
+                var command = new ListFilesCommand { Path = step.SourcePath, IncludeSubdirectories = step.IncludeSubdirectories };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
                 sourceFiles = response.Files;
             }
@@ -118,15 +110,10 @@ namespace VSRAD.Package.Server
             {
                 return new StepResult(false, $"Data is missing. File or directory is not found on the {(step.Direction == FileCopyDirection.RemoteToLocal ? "remote" : "local")} machine at {step.SourcePath}", "");
             }
-            IList<FileMetadata> targetFiles;
+            // List all target files
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new ListFilesCommand
-                {
-                    Path = step.TargetPath,
-                    WorkDir = _environment.RemoteWorkDir,
-                    IncludeSubdirectories = step.IncludeSubdirectories
-                };
+                var command = new ListFilesCommand { Path = step.TargetPath, IncludeSubdirectories = step.IncludeSubdirectories };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
                 targetFiles = response.Files;
             }
@@ -135,7 +122,7 @@ namespace VSRAD.Package.Server
                 if (!TryGetMetadataForLocalPath(step.TargetPath, step.IncludeSubdirectories, out targetFiles, out var error))
                     return new StepResult(false, error, "");
             }
-            /* Copying a single file */
+            // Copying one file?
             if (sourceFiles.Count == 1 && !sourceFiles[0].IsDirectory)
             {
                 if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
@@ -152,7 +139,7 @@ namespace VSRAD.Package.Server
 
                 return await DoCopySingleFileAsync(step);
             }
-            /* Copying a directory */
+            // Copying a directory?
             return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles);
         }
 
@@ -179,7 +166,7 @@ namespace VSRAD.Package.Server
             {
                 if (step.Direction == FileCopyDirection.RemoteToLocal)
                 {
-                    var command = new GetFilesCommand { RootPath = new[] { _environment.RemoteWorkDir, step.SourcePath }, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
+                    var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
                     var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
 
                     if (response.Status != GetFilesStatus.Successful)
@@ -189,8 +176,7 @@ namespace VSRAD.Package.Server
                 }
                 else
                 {
-                    var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
-                    files.AddRange(PackedFile.PackFiles(rootPath, filesToGet));
+                    files.AddRange(PackedFile.PackFiles(step.SourcePath, filesToGet));
                 }
             }
             /* Include empty directories */
@@ -206,13 +192,7 @@ namespace VSRAD.Package.Server
 
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                ICommand command = new PutDirectoryCommand
-                {
-                    Files = files.ToArray(),
-                    Path = step.TargetPath,
-                    WorkDir = _environment.RemoteWorkDir,
-                    PreserveTimestamps = step.PreserveTimestamps
-                };
+                ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
@@ -226,14 +206,12 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                if (!TryGetFullLocalPath(step.TargetPath, out var fullPath, out var error))
-                    return new StepResult(false, error, "");
-                if (File.Exists(fullPath))
+                if (File.Exists(step.TargetPath))
                     return new StepResult(false, $"Directory cannot be copied. The target path on the local machine is a file: {step.SourcePath}", "");
 
                 try
                 {
-                    PackedFile.UnpackFiles(fullPath, files, step.PreserveTimestamps);
+                    PackedFile.UnpackFiles(step.TargetPath, files, step.PreserveTimestamps);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -254,7 +232,7 @@ namespace VSRAD.Package.Server
             /* Read source file */
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
-                var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
+                var command = new FetchResultRange { FilePath = new[] { step.SourcePath } };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"Data is missing. File is not found on the remote machine at {step.SourcePath}", "");
@@ -268,7 +246,7 @@ namespace VSRAD.Package.Server
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = "" };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
@@ -289,15 +267,11 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step, CancellationToken cancellationToken)
         {
-            var workDir = step.WorkingDirectory;
-            if (string.IsNullOrEmpty(workDir))
-                workDir = step.Environment == StepEnvironment.Local ? _environment.LocalWorkDir : _environment.RemoteWorkDir;
-
             var command = new Execute
             {
                 Executable = step.Executable,
                 Arguments = step.Arguments,
-                WorkingDirectory = workDir,
+                WorkingDirectory = step.WorkingDirectory,
                 RunAsAdministrator = step.RunAsAdmin,
                 WaitForCompletion = step.WaitForCompletion,
                 ExecutionTimeoutSecs = step.TimeoutSecs
@@ -338,8 +312,7 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            var localPath = Path.Combine(_environment.LocalWorkDir, step.Path);
-            VsEditor.OpenFileInEditor(_serviceProvider, localPath, null, step.LineMarker,
+            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, null, step.LineMarker,
                 _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
             return new StepResult(true, "", "");
         }
@@ -388,41 +361,39 @@ namespace VSRAD.Package.Server
                 dispatchParamsString = Encoding.UTF8.GetString(data);
             }
             {
-                var path = step.OutputFile.Path;
-                var initOutputTimestamp = GetInitialFileTimestamp(path);
+                var outputPath = step.OutputFile.Path;
+                var initOutputTimestamp = GetInitialFileTimestamp(outputPath);
 
                 BreakStateOutputFile outputFile;
                 byte[] localOutputData = null;
 
                 if (step.OutputFile.IsRemote())
                 {
-                    var fullPath = new[] { _environment.RemoteWorkDir, path };
-                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput });
 
                     if (response.Status == FetchStatus.FileNotFound)
-                        return new StepResult(false, $"Debug data is missing. Output file could not be found on the remote machine at {path}", "", breakState: null);
+                        return new StepResult(false, $"Debug data is missing. Output file could not be found on the remote machine at {outputPath}", "", breakState: null);
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the remote machine at {path}", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the remote machine at {outputPath}", "", breakState: null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
                     var dataDwordCount = Math.Max(0, (response.ByteCount - offset) / 4);
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
+                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
                 }
                 else
                 {
-                    var fullPath = new[] { _environment.LocalWorkDir, path };
-                    var timestamp = GetLocalFileLastWriteTimeUtc(path);
+                    var timestamp = GetLocalFileLastWriteTimeUtc(outputPath);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the local machine at {path}", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the local machine at {outputPath}", "", breakState: null);
 
                     var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
-                    if (!ReadLocalFile(path, out localOutputData, out var readError, readOffset))
+                    if (!ReadLocalFile(outputPath, out localOutputData, out var readError, readOffset))
                         return new StepResult(false, "Debug data is missing. " + readError, "", breakState: null);
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
                     var dataDwordCount = localOutputData.Length / 4;
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
+                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
                 var breakStateResult = BreakState.CreateBreakState(breakTarget, _environment.Watches, validWatchesString, dispatchParamsString, outputFile, localOutputData, step.CheckMagicNumber);
                 if (breakStateResult.TryGetResult(out var breakState, out var error))
@@ -437,8 +408,7 @@ namespace VSRAD.Package.Server
             var initTimestamp = GetInitialFileTimestamp(path);
             if (isRemote)
             {
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                    new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, path } });
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { path } });
 
                 if (response.Status == FetchStatus.FileNotFound)
                     return new Error($"{type} data is missing. File could not be found on the remote machine at {path}");
@@ -457,13 +427,8 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private bool ReadLocalFile(string path, out byte[] data, out string error, int byteOffset = 0)
+        private static bool ReadLocalFile(string fullPath, out byte[] data, out string error, int byteOffset = 0)
         {
-            if (!TryGetFullLocalPath(path, out var fullPath, out error))
-            {
-                data = null;
-                return false;
-            }
             try
             {
                 using (var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
@@ -486,33 +451,28 @@ namespace VSRAD.Package.Server
             }
             catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
             {
-                error = $"File is not found on the local machine at {path}";
+                error = $"File is not found on the local machine at {fullPath}";
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access is denied to local file at {path}";
+                error = $"Access is denied to local file at {fullPath}";
             }
             data = null;
             return false;
         }
 
-        private bool WriteLocalFile(string path, byte[] data, out string error)
+        private static bool WriteLocalFile(string fullPath, byte[] data, out string error)
         {
             try
             {
-                var localPath = Path.Combine(_environment.LocalWorkDir, path);
-                Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-                File.WriteAllBytes(localPath, data);
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+                File.WriteAllBytes(fullPath, data);
                 error = "";
                 return true;
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access is denied to local file at {path}";
-            }
-            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-            {
-                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
+                error = $"Access is denied to local file at {fullPath}";
             }
             return false;
         }
@@ -525,7 +485,7 @@ namespace VSRAD.Package.Server
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                            new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } })).Timestamp;
+                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } })).Timestamp;
                     else
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
@@ -538,7 +498,7 @@ namespace VSRAD.Package.Server
                             continue;
                         if (file.IsRemote())
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                                new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, file.Path } })).Timestamp;
+                                new FetchMetadata { FilePath = new[] { file.Path } })).Timestamp;
                         else
                             _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }
@@ -546,12 +506,11 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private DateTime GetLocalFileLastWriteTimeUtc(string file)
+        private static DateTime GetLocalFileLastWriteTimeUtc(string fullPath)
         {
             try
             {
-                var localPath = Path.Combine(_environment.LocalWorkDir, file);
-                return File.GetLastWriteTimeUtc(localPath);
+                return File.GetLastWriteTimeUtc(fullPath);
             }
             catch
             {
@@ -559,16 +518,11 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private bool TryGetMetadataForLocalPath(string path, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
+        private static bool TryGetMetadataForLocalPath(string localPath, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
         {
-            if (!TryGetFullLocalPath(path, out var localPath, out error))
-            {
-                metadata = null;
-                return false;
-            }
-
             try
             {
+                error = "";
                 metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
                 return true;
             }
@@ -582,22 +536,6 @@ namespace VSRAD.Package.Server
             {
                 error = $"Failed to read a local directory or its contents at {localPath}";
                 metadata = null;
-                return false;
-            }
-        }
-
-        private bool TryGetFullLocalPath(string path, out string fullPath, out string error)
-        {
-            try
-            {
-                error = "";
-                fullPath = Path.Combine(_environment.LocalWorkDir, path);
-                return true;
-            }
-            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-            {
-                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
-                fullPath = null;
                 return false;
             }
         }

@@ -4,7 +4,9 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -19,9 +21,50 @@ namespace VSRAD.Package.Options
     // it satisfies the contract (the same hash code is returned for objects that are equal)
     // and prevents errors when an object is mutated (e.g. in profile editor's WPF controls, https://stackoverflow.com/q/15365905)
 
+    public sealed class ActionEvaluationTransients
+    {
+        public string LocalWorkDir { get; }
+        public string RemoteWorkDir { get; }
+        public bool RunActionsLocally { get; }
+        public OSPlatform ServerPlatform { get; }
+        public IEnumerable<ActionProfileOptions> Actions { get; }
+
+        public ActionEvaluationTransients(string localWorkDir, string remoteWorkDir, bool runActionsLocally, OSPlatform serverPlatform, IEnumerable<ActionProfileOptions> actions)
+        {
+            LocalWorkDir = localWorkDir;
+            RemoteWorkDir = remoteWorkDir;
+            RunActionsLocally = runActionsLocally;
+            ServerPlatform = serverPlatform;
+            Actions = actions;
+        }
+
+        public Result<string> ResolveFullPath(string path, StepEnvironment location)
+        {
+            try
+            {
+                if (location == StepEnvironment.Local)
+                    return Path.Combine(LocalWorkDir, path);
+                if (ServerPlatform == OSPlatform.Windows)
+                    return Path.Combine(RemoteWorkDir, path);
+                /* Else handle UNIX server paths */
+                if (RemoteWorkDir.Length == 0 || path.StartsWith("/", StringComparison.Ordinal))
+                    return path;
+                else if (RemoteWorkDir.EndsWith("/", StringComparison.Ordinal))
+                    return RemoteWorkDir + path;
+                else
+                    return RemoteWorkDir + '/' + path;
+            }
+            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+            {
+                var workDir = location == StepEnvironment.Remote ? RemoteWorkDir : LocalWorkDir;
+                return new Error($"Path contains illegal characters: \"{path}\"\r\nWorking directory: \"{workDir}\"");
+            }
+        }
+    }
+
     public interface IActionStep : INotifyPropertyChanged
     {
-        Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction);
+        Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction);
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -100,7 +143,7 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 1;
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
         {
             if (string.IsNullOrWhiteSpace(SourcePath))
                 return EvaluationError(sourceAction, "Copy File", "No source path specified");
@@ -119,7 +162,14 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrWhiteSpace(evaluatedTargetPath))
                 return EvaluationError(sourceAction, "Copy File", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
 
-            var direction = profile.General.RunActionsLocally ? FileCopyDirection.LocalToLocal : Direction;
+            var direction = transients.RunActionsLocally ? FileCopyDirection.LocalToLocal : Direction;
+
+            var sourceLocation = direction == FileCopyDirection.RemoteToLocal ? StepEnvironment.Remote : StepEnvironment.Local;
+            var targetLocation = direction == FileCopyDirection.LocalToRemote ? StepEnvironment.Remote : StepEnvironment.Local;
+            if (!transients.ResolveFullPath(evaluatedSourcePath, sourceLocation).TryGetResult(out evaluatedSourcePath, out error))
+                return EvaluationError(sourceAction, "Copy File", error.Message);
+            if (!transients.ResolveFullPath(evaluatedTargetPath, targetLocation).TryGetResult(out evaluatedTargetPath, out error))
+                return EvaluationError(sourceAction, "Copy File", error.Message);
 
             return new CopyFileStep
             {
@@ -178,7 +228,7 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 3;
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
         {
             if (string.IsNullOrWhiteSpace(Executable))
                 return EvaluationError(sourceAction, "Execute", "No executable specified");
@@ -196,7 +246,15 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrWhiteSpace(evaluatedExecutable))
                 return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
 
-            var environment = profile.General.RunActionsLocally ? StepEnvironment.Local : Environment;
+            var environment = transients.RunActionsLocally ? StepEnvironment.Local : Environment;
+
+            if (string.IsNullOrWhiteSpace(evaluatedWorkdir))
+            {
+                if (environment == StepEnvironment.Remote)
+                    evaluatedWorkdir = transients.RemoteWorkDir;
+                else
+                    evaluatedWorkdir = transients.LocalWorkDir;
+            }
 
             return new ExecuteStep
             {
@@ -229,7 +287,7 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 5;
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
         {
             if (string.IsNullOrWhiteSpace(Path))
                 return EvaluationError(sourceAction, "Open in Editor", "No file path specified");
@@ -240,6 +298,9 @@ namespace VSRAD.Package.Options
 
             if (string.IsNullOrWhiteSpace(evaluatedPath))
                 return EvaluationError(sourceAction, "Open in Editor", $"The specified file path (\"{Path}\") evaluates to an empty string");
+
+            if (!transients.ResolveFullPath(evaluatedPath, StepEnvironment.Local).TryGetResult(out evaluatedPath, out error))
+                return EvaluationError(sourceAction, "Open in Editor", error.Message);
 
             return new OpenInEditorStep { Path = evaluatedPath, LineMarker = LineMarker };
         }
@@ -267,17 +328,17 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 7;
 
-        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction) =>
-            EvaluateAsync(evaluator, profile, actionStack: new[] { sourceAction });
+        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction) =>
+            EvaluateAsync(evaluator, transients, actionStack: new[] { sourceAction });
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, IEnumerable<string> actionStack)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, IEnumerable<string> actionStack)
         {
             if (string.IsNullOrWhiteSpace(Name))
                 return EvaluationError(actionStack.Last(), "Run Action", "No action specified");
             if (actionStack.Contains(Name))
                 return NestedEvaluationError(actionStack.Last(), EvaluationError(Name, "Run Action", "Circular dependency between actions"));
 
-            var action = profile.Actions.FirstOrDefault(a => a.Name == Name);
+            var action = transients.Actions.FirstOrDefault(a => a.Name == Name);
             if (action == null)
                 return EvaluationError(actionStack.Last(), "Run Action", $"Action \"{Name}\" is not found");
 
@@ -286,9 +347,9 @@ namespace VSRAD.Package.Options
             {
                 Result<IActionStep> evalResult;
                 if (step is RunActionStep runAction)
-                    evalResult = await runAction.EvaluateAsync(evaluator, profile, actionStack.Append(Name));
+                    evalResult = await runAction.EvaluateAsync(evaluator, transients, actionStack.Append(Name));
                 else
-                    evalResult = await step.EvaluateAsync(evaluator, profile, Name);
+                    evalResult = await step.EvaluateAsync(evaluator, transients, Name);
                 if (!evalResult.TryGetResult(out var evaluated, out var error))
                     return NestedEvaluationError(actionStack.Last(), error);
 
@@ -314,19 +375,23 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 9;
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
         {
             var breakpointsResult = await evaluator.EvaluateAsync(BreakpointListPath);
             if (!breakpointsResult.TryGetResult(out var breakpointsPath, out var error))
                 return EvaluationError(sourceAction, "Write Debug Target", error.Message);
             if (string.IsNullOrEmpty(breakpointsPath))
                 return EvaluationError(sourceAction, "Write Debug Target", "Breakpoint list path is not specified or evaluates to an empty string");
+            if (!transients.ResolveFullPath(breakpointsPath, StepEnvironment.Local).TryGetResult(out breakpointsPath, out error))
+                return EvaluationError(sourceAction, "Write Debug Target", error.Message);
 
             var watchesResult = await evaluator.EvaluateAsync(WatchListPath);
             if (!watchesResult.TryGetResult(out var watchesPath, out error))
                 return EvaluationError(sourceAction, "Write Debug Target", error.Message);
             if (string.IsNullOrEmpty(watchesPath))
                 return EvaluationError(sourceAction, "Write Debug Target", "Watch list path is not specified or evaluates to an empty string");
+            if (!transients.ResolveFullPath(watchesPath, StepEnvironment.Local).TryGetResult(out watchesPath, out error))
+                return EvaluationError(sourceAction, "Write Debug Target", error.Message);
 
             return new WriteDebugTargetStep { BreakpointListPath = breakpointsPath, WatchListPath = watchesPath };
         }
@@ -365,7 +430,7 @@ namespace VSRAD.Package.Options
             CheckMagicNumber = magicNumber;
         }
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
         {
             var outputResult = await OutputFile.EvaluateAsync(evaluator);
             if (!outputResult.TryGetResult(out var outputFile, out var error))
@@ -385,12 +450,24 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrEmpty(dispatchParamsFile.Path))
                 return EvaluationError(sourceAction, "Read Debug Data", "Dispatch parameters path is not specified");
 
-            if (profile.General.RunActionsLocally)
+            if (transients.RunActionsLocally)
             {
                 outputFile.Location = StepEnvironment.Local;
                 watchesFile.Location = StepEnvironment.Local;
                 dispatchParamsFile.Location = StepEnvironment.Local;
             }
+
+            if (!transients.ResolveFullPath(outputFile.Path, outputFile.Location).TryGetResult(out var outputFullPath, out error))
+                return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            outputFile.Path = outputFullPath;
+
+            if (!transients.ResolveFullPath(watchesFile.Path, watchesFile.Location).TryGetResult(out var watchesFullPath, out error))
+                return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            watchesFile.Path = watchesFullPath;
+
+            if (!transients.ResolveFullPath(dispatchParamsFile.Path, dispatchParamsFile.Location).TryGetResult(out var dispatchParamsFullPath, out error))
+                return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            dispatchParamsFile.Path = dispatchParamsFullPath;
 
             return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput, magicNumber: CheckMagicNumber,
                 outputFile: outputFile, watchesFile: watchesFile, dispatchParamsFile: dispatchParamsFile);

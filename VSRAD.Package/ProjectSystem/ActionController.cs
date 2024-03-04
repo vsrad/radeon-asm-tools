@@ -8,6 +8,7 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -170,7 +171,10 @@ namespace VSRAD.Package.ProjectSystem
                 var generalResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);
                 if (!generalResult.TryGetResult(out var general, out var evalError))
                     return evalError;
-                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
+
+                var evalTransients = new ActionEvaluationTransients(general.LocalWorkDir, general.RemoteWorkDir, general.RunActionsLocally,
+                    _channel.ServerPlatform, _project.Options.Profile.Actions);
+                var evalResult = await action.EvaluateAsync(evaluator, evalTransients);
                 if (!evalResult.TryGetResult(out action, out evalError))
                     return evalError;
 
@@ -178,7 +182,7 @@ namespace VSRAD.Package.ProjectSystem
                 _projectSourceManager.SaveProjectState();
 
                 var continueOnError = _project.Options.Profile.General.ContinueActionExecOnError;
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget);
+                var env = new ActionEnvironment(watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, continueOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
                 return runResult;

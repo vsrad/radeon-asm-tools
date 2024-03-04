@@ -18,9 +18,7 @@ namespace VSRAD.DebugServer.Handlers
 
         public async Task<IResponse> RunAsync()
         {
-            var fullPath = Path.Combine(_command.WorkDir, _command.Path);
-
-            if (File.Exists(fullPath))
+            if (File.Exists(_command.Path))
                 return new PutDirectoryResponse { Status = PutDirectoryStatus.TargetPathIsFile };
 
             bool retryOnce = true;
@@ -28,7 +26,7 @@ namespace VSRAD.DebugServer.Handlers
             {
                 try
                 {
-                    PackedFile.UnpackFiles(fullPath, _command.Files, _command.PreserveTimestamps);
+                    PackedFile.UnpackFiles(_command.Path, _command.Files, _command.PreserveTimestamps);
                     return new PutDirectoryResponse { Status = PutDirectoryStatus.Successful };
                 }
                 catch (UnauthorizedAccessException)

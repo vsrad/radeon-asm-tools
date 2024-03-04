@@ -28,8 +28,8 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<GetFilesCommand, GetFilesResponse>(new GetFilesCommand
             {
                 UseCompression = false,
+                RootPath = tmpPath,
                 Paths = new[] { "k/s", "h/b/w", "empty/" },
-                RootPath = new[] { tmpPath }
             });
 
             Assert.Equal(GetFilesStatus.Successful, response.Status);
@@ -60,8 +60,8 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<GetFilesCommand, GetFilesResponse>(new GetFilesCommand
             {
                 UseCompression = true,
-                Paths = new[] { "test" },
-                RootPath = new[] { tmpPath }
+                RootPath = tmpPath,
+                Paths = new[] { "test" }
             });
             Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
 
@@ -71,8 +71,8 @@ namespace VSRAD.DebugServerTests.Handlers
             response = await Helper.DispatchCommandAsync<GetFilesCommand, GetFilesResponse>(new GetFilesCommand
             {
                 UseCompression = true,
-                Paths = new[] { "test" },
-                RootPath = new[] { tmpPath }
+                RootPath = tmpPath,
+                Paths = new[] { "test" }
             });
             Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
         }

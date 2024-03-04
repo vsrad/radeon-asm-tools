@@ -24,6 +24,8 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
+        OSPlatform ServerPlatform { get; }
+
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
