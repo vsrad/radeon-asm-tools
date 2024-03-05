@@ -1,6 +1,6 @@
 ﻿namespace VSRAD.DebugServer
 {
-    sealed class CliOptions
+    public sealed class CliOptions
     {
         private const int _defaultPort = 9339;
 

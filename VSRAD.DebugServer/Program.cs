@@ -32,15 +32,16 @@ namespace VSRAD.DebugServer
                     Console.WriteLine($"Warning! Cannot set console mode. Error code={GetLastError()}");
             }
 
+            var globalLog = new Logging.GlobalLogger();
             if (CliOptions.TryParse(args, out var options))
             {
-                var server = new Server(IPAddress.Any, options.Port, options.Verbose);
-                Logging.GlobalLogger.ServerStarted(options);
+                var server = new Server(IPAddress.Any, options.Port, globalLog);
+                globalLog.ServerStarted(options);
                 Task.Run(server.LoopAsync).Wait();
             }
             else
             {
-                Logging.GlobalLogger.Usage();
+                globalLog.Usage();
             }
         }
     }

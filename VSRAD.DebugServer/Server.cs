@@ -14,12 +14,12 @@ namespace VSRAD.DebugServer
 
         private readonly SemaphoreSlim _commandExecutionLock = new SemaphoreSlim(1, 1);
         private readonly TcpListener _listener;
-        private readonly bool _verboseLogging;
+        private readonly Logging.GlobalLogger _globalLog;
 
-        public Server(IPAddress ip, int port, bool verboseLogging = false)
+        public Server(IPAddress ip, int port, Logging.GlobalLogger globalLog)
         {
             _listener = new TcpListener(ip, port);
-            _verboseLogging = verboseLogging;
+            _globalLog = globalLog;
         }
 
         public async Task LoopAsync()
@@ -39,7 +39,7 @@ namespace VSRAD.DebugServer
         {
             using (tcpClient)
             {
-                var clientLog = new ClientLogger(clientId, _verboseLogging);
+                var clientLog = _globalLog.CreateClientLogger(clientId);
                 clientLog.ConnectionEstablished(tcpClient.Client.RemoteEndPoint);
                 while (true)
                 {
@@ -60,12 +60,14 @@ namespace VSRAD.DebugServer
                         }
                         clientLog.CommandProcessed();
                     }
+                    catch (Exception e) when (IsConnectionResetException(e))
+                    {
+                        clientLog.CliendDisconnected();
+                        break;
+                    }
                     catch (Exception e)
                     {
-                        if (e is OperationCanceledException || e is EndOfStreamException || (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset))
-                            clientLog.CliendDisconnected();
-                        else
-                            clientLog.FatalClientException(e);
+                        clientLog.FatalClientException(e);
                         break;
                     }
                     finally
@@ -76,5 +78,13 @@ namespace VSRAD.DebugServer
                 }
             }
         }
+
+        private static bool IsConnectionResetException(Exception e) => e switch
+        {
+            OperationCanceledException _ => true,
+            EndOfStreamException _ => true,
+            _ when e.InnerException is SocketException se => se.SocketErrorCode == SocketError.ConnectionReset || se.SocketErrorCode == SocketError.ConnectionAborted,
+            _ => false
+        };
     }
 }

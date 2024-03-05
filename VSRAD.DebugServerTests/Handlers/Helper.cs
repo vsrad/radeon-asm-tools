@@ -8,13 +8,15 @@ namespace VSRAD.DebugServerTests.Handlers
 {
     static class Helper
     {
+        static readonly Serilog.ILogger SilentLogger = new Serilog.LoggerConfiguration().CreateLogger();
+
         public static async Task<TR> DispatchCommandAsync<TC, TR>(TC command)
             where TC : ICommand where TR : IResponse
         {
             // Test serialization
             command = await command.WithSerializationAsync();
 
-            var logger = new ClientLogger(0, false);
+            var logger = new DebugServer.Logging.ClientLogger(SilentLogger);
             var response = await Dispatcher.DispatchAsync(command, logger);
 
             using var stream = new MemoryStream();

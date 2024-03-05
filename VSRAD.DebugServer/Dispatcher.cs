@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using VSRAD.DebugServer.Handlers;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.Logging;
 
 namespace VSRAD.DebugServer
 {

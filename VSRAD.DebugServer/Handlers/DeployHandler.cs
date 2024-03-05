@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.Logging;
 
 namespace VSRAD.DebugServer.Handlers
 {
