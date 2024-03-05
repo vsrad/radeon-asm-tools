@@ -232,7 +232,7 @@ namespace VSRAD.Package.Server
             /* Read source file */
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
-                var command = new FetchResultRange { FilePath = new[] { step.SourcePath } };
+                var command = new FetchResultRange { FilePath = step.SourcePath };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command, cancellationToken);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"Data is missing. File is not found on the remote machine at {step.SourcePath}", "");
@@ -246,7 +246,7 @@ namespace VSRAD.Package.Server
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = "" };
+                ICommand command = new PutFileCommand { FilePath = step.TargetPath, Data = sourceContents };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command, cancellationToken);
@@ -369,7 +369,7 @@ namespace VSRAD.Package.Server
 
                 if (step.OutputFile.IsRemote())
                 {
-                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput }, cancellationToken);
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = outputPath, BinaryOutput = step.BinaryOutput }, cancellationToken);
 
                     if (response.Status == FetchStatus.FileNotFound)
                         return new StepResult(false, $"Debug data is missing. Output file could not be found on the remote machine at {outputPath}", "", breakState: null);
@@ -408,7 +408,7 @@ namespace VSRAD.Package.Server
             var initTimestamp = GetInitialFileTimestamp(path);
             if (isRemote)
             {
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { path } }, cancellationToken);
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = path }, cancellationToken);
 
                 if (response.Status == FetchStatus.FileNotFound)
                     return new Error($"{type} data is missing. File could not be found on the remote machine at {path}");
@@ -485,7 +485,7 @@ namespace VSRAD.Package.Server
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } }, cancellationToken)).Timestamp;
+                            new FetchMetadata { FilePath = copyFile.SourcePath }, cancellationToken)).Timestamp;
                     else
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
@@ -498,7 +498,7 @@ namespace VSRAD.Package.Server
                             continue;
                         if (file.IsRemote())
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                                new FetchMetadata { FilePath = new[] { file.Path } }, cancellationToken)).Timestamp;
+                                new FetchMetadata { FilePath = file.Path }, cancellationToken)).Timestamp;
                         else
                             _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }

@@ -13,7 +13,7 @@ namespace VSRAD.DebugServer.Handlers
         public FetchMetadataHandler(IPC.Commands.FetchMetadata command)
         {
             BinaryOutput = command.BinaryOutput;
-            FilePath = Path.Combine(command.FilePath);
+            FilePath = command.FilePath;
         }
 
         public Task<IResponse> RunAsync()

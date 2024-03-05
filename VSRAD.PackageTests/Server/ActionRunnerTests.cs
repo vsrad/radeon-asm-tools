@@ -36,7 +36,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) }, (FetchMetadata command) =>
             {
                 // init timestamp fetch
-                Assert.Equal(new[] { "/home/mizu/machete/tweened.tvpp" }, command.FilePath);
+                Assert.Equal("/home/mizu/machete/tweened.tvpp", command.FilePath);
             });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "", Stderr = "" });
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", 1, DateTime.FromBinary(101)) } });
@@ -514,14 +514,14 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(watches: TestHelper.ReadFixtureLines("Watches.txt")), _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
-                Assert.Equal(new[] { "/glitch/city/output" }, initTimestampFetch.FilePath));
+                Assert.Equal("/glitch/city/output", initTimestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
-                Assert.Equal(new[] { "/glitch/city/watches" }, watchesFetch.FilePath));
+                Assert.Equal("/glitch/city/watches", watchesFetch.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") }, (FetchResultRange statusFetch) =>
-                Assert.Equal(new[] { "/glitch/city/status" }, statusFetch.FilePath));
+                Assert.Equal("/glitch/city/status", statusFetch.FilePath));
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") }, (FetchMetadata outputMetaFetch) =>
-                Assert.Equal(new[] { "/glitch/city/output" }, outputMetaFetch.FilePath));
+                Assert.Equal("/glitch/city/output", outputMetaFetch.FilePath));
 
             var result = await runner.RunAsync("Debug", steps);
 
@@ -555,7 +555,7 @@ namespace VSRAD.PackageTests.Server
 
             for (int i = 0; i < 3; ++i) // initial timestamp fetch
                 channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(i) });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound }, (FetchResultRange w) => Assert.Equal(new[] { "/remote/watches" }, w.FilePath));
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound }, (FetchResultRange w) => Assert.Equal("/remote/watches", w.FilePath));
 
             var result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
@@ -566,7 +566,7 @@ namespace VSRAD.PackageTests.Server
             for (int i = 0; i < 3; ++i) // initial timestamp fetch
                 channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(i) });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) },
-                (FetchResultRange w) => Assert.Equal(new[] { "/remote/watches" }, w.FilePath));
+                (FetchResultRange w) => Assert.Equal("/remote/watches", w.FilePath));
 
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
@@ -577,11 +577,11 @@ namespace VSRAD.PackageTests.Server
             for (int i = 0; i < 3; ++i) // initial timestamp fetch
                 channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") },
-                (FetchResultRange f) => Assert.Equal(new[] { "/remote/watches" }, f.FilePath));
+                (FetchResultRange f) => Assert.Equal("/remote/watches", f.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") },
-                (FetchResultRange f) => Assert.Equal(new[] { "/remote/dispatch" }, f.FilePath));
+                (FetchResultRange f) => Assert.Equal("/remote/dispatch", f.FilePath));
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 65536 },
-                (FetchMetadata f) => Assert.Equal(new[] { "/remote/output" }, f.FilePath));
+                (FetchMetadata f) => Assert.Equal("/remote/output", f.FilePath));
 
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
@@ -716,18 +716,18 @@ result.StepResults[0].Warning);
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(), _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(100) }, (FetchMetadata command) =>
-                Assert.Equal(new[] { "/home/parker/audio/checked" }, command.FilePath));
+                Assert.Equal("/home/parker/audio/checked", command.FilePath));
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata command) =>
-                Assert.Equal(new[] { "/home/parker/audio/master" }, command.FilePath));
+                Assert.Equal("/home/parker/audio/master", command.FilePath));
 
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", 1, DateTime.FromBinary(101)) } },
                 (ListFilesCommand command) => { Assert.Equal("/home/parker/audio/checked", command.Path); });
             channel.ThenRespond(new ResultRangeFetched { Data = Encoding.UTF8.GetBytes("TestCopyStepChecked") },
-                (FetchResultRange command) => Assert.Equal(new[] { "/home/parker/audio/checked" }, command.FilePath));
+                (FetchResultRange command) => Assert.Equal("/home/parker/audio/checked", command.FilePath));
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", 1, DateTime.FromBinary(101)) } },
                 (ListFilesCommand command) => { Assert.Equal("/home/parker/audio/unchecked", command.Path); });
             channel.ThenRespond(new ResultRangeFetched { Data = Encoding.UTF8.GetBytes("TestCopyStepUnchecked") },
-                (FetchResultRange command) => Assert.Equal(new[] { "/home/parker/audio/unchecked" }, command.FilePath));
+                (FetchResultRange command) => Assert.Equal("/home/parker/audio/unchecked", command.FilePath));
 
             // ReadDebugDataStep
             channel.ThenRespond(new ResultRangeFetched());

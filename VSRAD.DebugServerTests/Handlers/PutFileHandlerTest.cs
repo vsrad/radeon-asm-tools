@@ -16,9 +16,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<PutFileCommand, PutFileResponse>(new PutFileCommand
             {
-                Data = Encoding.UTF8.GetBytes("putfilehandlertest"),
-                Path = Path.GetFileName(tmpPath),
-                WorkDir = Path.GetDirectoryName(tmpPath)
+                FilePath = tmpPath,
+                Data = Encoding.UTF8.GetBytes("putfilehandlertest")
             });
 
             Assert.Equal(PutFileStatus.Successful, response.Status);
@@ -34,9 +33,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<PutFileCommand, PutFileResponse>(new PutFileCommand
             {
-                Data = Encoding.UTF8.GetBytes("putfilehandlertest"),
-                Path = Path.GetFileName(tmpPath),
-                WorkDir = Path.GetDirectoryName(tmpPath)
+                FilePath = tmpPath,
+                Data = Encoding.UTF8.GetBytes("putfilehandlertest")
             });
 
             Assert.Equal(PutFileStatus.PermissionDenied, response.Status);
@@ -55,9 +53,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<PutFileCommand, PutFileResponse>(new PutFileCommand
             {
-                Data = Encoding.UTF8.GetBytes("putfilehandlertest"),
-                Path = Path.Combine(relDir, relFile),
-                WorkDir = Path.GetTempPath()
+                FilePath = Path.Combine(absDir, relFile),
+                Data = Encoding.UTF8.GetBytes("putfilehandlertest")
             });
 
             Assert.Equal(PutFileStatus.Successful, response.Status);
@@ -75,9 +72,8 @@ namespace VSRAD.DebugServerTests.Handlers
             {
                 var response = await Helper.DispatchCommandAsync<PutFileCommand, PutFileResponse>(new PutFileCommand
                 {
-                    Data = Encoding.UTF8.GetBytes("putfilehandlertest"),
-                    Path = tmpPath,
-                    WorkDir = Path.GetTempPath()
+                    FilePath = tmpPath,
+                    Data = Encoding.UTF8.GetBytes("putfilehandlertest")
                 });
                 Assert.Equal(PutFileStatus.OtherIOError, response.Status);
             }

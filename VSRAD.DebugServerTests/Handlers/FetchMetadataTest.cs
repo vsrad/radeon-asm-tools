@@ -17,7 +17,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchMetadata, MetadataFetched>(
                 new FetchMetadata
                 {
-                    FilePath = new[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     BinaryOutput = true
                 });
             Assert.Equal(FetchStatus.Successful, response.Status);
@@ -31,7 +31,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchMetadata, MetadataFetched>(
                 new FetchMetadata
                 {
-                    FilePath = new[] { @"I:\Never", "Existed" }
+                    FilePath = @"F:\Ile\Does\Not\Exist"
                 });
             Assert.Equal(FetchStatus.FileNotFound, response.Status);
         }
@@ -45,7 +45,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchMetadata, MetadataFetched>(
                 new FetchMetadata
                 {
-                    FilePath = new[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     BinaryOutput = false
                 });
             Assert.Equal(FetchStatus.Successful, response.Status);
@@ -55,7 +55,7 @@ namespace VSRAD.DebugServerTests.Handlers
             response = await Helper.DispatchCommandAsync<FetchMetadata, MetadataFetched>(
                 new FetchMetadata
                 {
-                    FilePath = new[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     BinaryOutput = false
                 });
             Assert.Equal(FetchStatus.Successful, response.Status);

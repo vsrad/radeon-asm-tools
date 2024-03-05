@@ -150,7 +150,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Array.Empty<byte>() },
             (command) =>
             {
-                Assert.Equal(new[] { "/home/kyubey/projects/log.tar" }, command.FilePath);
+                Assert.Equal("/home/kyubey/projects/log.tar", command.FilePath);
             });
             var warning = await breakState.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0);
             Assert.Equal("Group #0 is incomplete: expected to read 4096 bytes but the output file contains 0.", warning);

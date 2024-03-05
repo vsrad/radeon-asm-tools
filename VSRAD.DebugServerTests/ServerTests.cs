@@ -80,7 +80,7 @@ namespace VSRAD.DebugServerTests
             // because commands are executed sequentially
             await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.FetchMetadata
             {
-                FilePath = new[] { @"N:\owhere" }
+                FilePath = @"N:\owhere"
             }).ConfigureAwait(false);
 
             var (response1, _) = await stream1.ReadSerializedResponseAsync<ExecutionCompleted>().ConfigureAwait(false);

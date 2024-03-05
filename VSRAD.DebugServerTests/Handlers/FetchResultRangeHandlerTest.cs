@@ -21,7 +21,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = 0,
                     ByteCount = data.Length + 1,
                     BinaryOutput = true
@@ -36,7 +36,7 @@ namespace VSRAD.DebugServerTests.Handlers
             response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = offset,
                     ByteCount = count,
                     BinaryOutput = true
@@ -66,7 +66,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = 6,
                     ByteCount = 8,
                     OutputOffset = 1,
@@ -79,7 +79,7 @@ namespace VSRAD.DebugServerTests.Handlers
             response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = 0,
                     ByteCount = 666,
                     BinaryOutput = false
@@ -113,7 +113,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = 0,
                     ByteCount = 20,
                     OutputOffset = 1,
@@ -134,7 +134,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = 0,
                     ByteCount = 0,
                     BinaryOutput = true
@@ -152,7 +152,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     OutputOffset = 3,
                     ByteOffset = 0,
                     ByteCount = 0,
@@ -180,7 +180,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = 0,
                     ByteCount = 0,
                     OutputOffset = 1,
@@ -204,7 +204,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = int.Parse("DEAD", System.Globalization.NumberStyles.HexNumber),
                     ByteCount = 666,
                     BinaryOutput = true
@@ -220,7 +220,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { @"Do:\You", "Exist?" },
+                    FilePath = @"H:\What",
                     ByteOffset = int.Parse("DEAD", System.Globalization.NumberStyles.HexNumber),
                     ByteCount = 666,
                     BinaryOutput = true
@@ -240,7 +240,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    FilePath = tmpFile,
                     ByteOffset = 1,
                     ByteCount = 666,
                     BinaryOutput = true,
@@ -251,10 +251,10 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var stringData = new string[]
             {
-                "<...-Restricted accesы: do not proceed without special permission-...>",
-                "<...-Property of NERV corporation. All rights reserved-...>",
-                "<...-EVA00 logfile-...>",
-                "<...-System state snapshot 11/01/1996 00:00:15-...>",
+                "<...-Skip1-...>",
+                "<...-Skip2-...>",
+                "<...-Skip3-...>",
+                "<...-Skip4-...>",
                 "0x00000016",
                 "0x00000022",
                 "0x00000064",
@@ -270,7 +270,7 @@ namespace VSRAD.DebugServerTests.Handlers
             response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                new FetchResultRange
                {
-                   FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                   FilePath = tmpFile,
                    ByteOffset = 4,
                    ByteCount = 8,
                    BinaryOutput = false,

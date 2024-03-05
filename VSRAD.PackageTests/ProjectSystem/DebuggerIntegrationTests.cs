@@ -80,16 +80,16 @@ namespace VSRAD.PackageTests.ProjectSystem
             /* Set up server responses */
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata timestampFetch) =>
-                Assert.Equal(new[] { "/periphery/votw/watches-path" }, timestampFetch.FilePath));
+                Assert.Equal("/periphery/votw/watches-path", timestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);
                 Assert.Equal(@"-source JATO.s -source-line 13", execute.Arguments);
             });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100), Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
-                Assert.Equal(new[] { "/periphery/votw/watches-path" }, watchesFetch.FilePath));
+                Assert.Equal("/periphery/votw/watches-path", watchesFetch.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") }, (FetchResultRange dispatchParamsFetch) =>
-                Assert.Equal(new[] { "/periphery/votw/dispatch-params-path" }, dispatchParamsFetch.FilePath));
+                Assert.Equal("/periphery/votw/dispatch-params-path", dispatchParamsFetch.FilePath));
 
             /* Start debugging */
 
