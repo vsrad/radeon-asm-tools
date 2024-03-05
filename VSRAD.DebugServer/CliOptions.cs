@@ -1,21 +1,23 @@
-﻿namespace VSRAD.DebugServer
+﻿using System.Net;
+
+namespace VSRAD.DebugServer
 {
     public sealed class CliOptions
     {
-        private const int _defaultPort = 9339;
+        private static readonly IPEndPoint _defaultEndpoint = new IPEndPoint(IPAddress.Any, 9339);
 
-        public int Port { get; }
+        public IPEndPoint LocalEndpoint { get; }
         public bool Verbose { get; }
 
-        private CliOptions(int port, bool verbose)
+        private CliOptions(IPEndPoint localEndpoint, bool verbose)
         {
-            Port = port;
+            LocalEndpoint = localEndpoint;
             Verbose = verbose;
         }
 
         public static bool TryParse(string[] args, out CliOptions options)
         {
-            var port = _defaultPort;
+            var endpoint = _defaultEndpoint;
             var verbose = false;
 
             foreach (var arg in args)
@@ -27,7 +29,7 @@
                         verbose = true;
                         continue;
                     default:
-                        if (int.TryParse(arg, out port))
+                        if (IPEndPoint.TryParse(arg, out endpoint))
                             continue;
 
                         options = null;
@@ -35,7 +37,7 @@
                 }
             }
 
-            options = new CliOptions(port, verbose);
+            options = new CliOptions(endpoint, verbose);
             return true;
         }
     }

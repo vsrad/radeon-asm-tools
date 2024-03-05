@@ -12,7 +12,7 @@ namespace VSRAD.DebugServerTests
         [Fact]
         public async void ExecuteTestAsync()
         {
-            var server = new Server(IPAddress.Any, 13333, new DebugServer.Logging.GlobalLogger());
+            var server = new Server(new IPEndPoint(IPAddress.Loopback, 13333), new DebugServer.Logging.GlobalLogger());
             _ = server.LoopAsync();
 
             var tmpFile = Path.GetTempFileName();
@@ -40,7 +40,7 @@ namespace VSRAD.DebugServerTests
         [Fact]
         public async void SequentialCommandProcessingTest()
         {
-            var server = new Server(IPAddress.Any, 13337, new DebugServer.Logging.GlobalLogger());
+            var server = new Server(new IPEndPoint(IPAddress.Loopback, 13337), new DebugServer.Logging.GlobalLogger());
             _ = server.LoopAsync();
 
             using var client1 = new TcpClient("127.0.0.1", 13337);

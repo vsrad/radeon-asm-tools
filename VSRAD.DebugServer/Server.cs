@@ -16,15 +16,25 @@ namespace VSRAD.DebugServer
         private readonly TcpListener _listener;
         private readonly Logging.GlobalLogger _globalLog;
 
-        public Server(IPAddress ip, int port, Logging.GlobalLogger globalLog)
+        public Server(IPEndPoint localEndpoint, Logging.GlobalLogger globalLog)
         {
-            _listener = new TcpListener(ip, port);
+            _listener = new TcpListener(localEndpoint);
             _globalLog = globalLog;
         }
 
         public async Task LoopAsync()
         {
-            _listener.Start();
+            try
+            {
+                _listener.Start();
+                _globalLog.ServerStarted(_listener.LocalEndpoint);
+            }
+            catch (SocketException e)
+            {
+                _globalLog.ServerStartException(_listener.LocalEndpoint, e);
+                return;
+            }
+
             uint clientsCount = 0;
             while (true)
             {

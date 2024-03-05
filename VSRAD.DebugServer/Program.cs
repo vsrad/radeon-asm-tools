@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -35,8 +34,8 @@ namespace VSRAD.DebugServer
             var globalLog = new Logging.GlobalLogger();
             if (CliOptions.TryParse(args, out var options))
             {
-                var server = new Server(IPAddress.Any, options.Port, globalLog);
-                globalLog.ServerStarted(options);
+                globalLog.SetLogLevel(options.Verbose);
+                var server = new Server(options.LocalEndpoint, globalLog);
                 Task.Run(server.LoopAsync).Wait();
             }
             else

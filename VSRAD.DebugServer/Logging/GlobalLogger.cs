@@ -3,14 +3,13 @@ using Serilog.Core;
 using Serilog.Events;
 using System;
 using System.IO;
+using System.Net;
 using System.Reflection;
 
 namespace VSRAD.DebugServer.Logging
 {
     public sealed class GlobalLogger
     {
-        public LoggingLevelSwitch LoggingLevel { get; } = new LoggingLevelSwitch();
-
         private static readonly string _executableName = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
         private static readonly string _assemblyName = Assembly.GetEntryAssembly().GetName().Name;
         private static readonly string _assemblyVersion = Assembly.GetEntryAssembly().GetName().Version.ToString(3);
@@ -19,6 +18,7 @@ namespace VSRAD.DebugServer.Logging
         private static readonly string _logTemplateFile = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}]{Context} {Message:lj}{NewLine}{Exception}";
 
         private readonly ILogger _logger;
+        private readonly LoggingLevelSwitch _loggingLevel = new LoggingLevelSwitch();
 
         public GlobalLogger()
         {
@@ -35,7 +35,7 @@ namespace VSRAD.DebugServer.Logging
             }
 
             _logger = new LoggerConfiguration()
-                .MinimumLevel.ControlledBy(LoggingLevel)
+                .MinimumLevel.ControlledBy(_loggingLevel)
                 .WriteTo.Console(outputTemplate: _logTemplateConsole)
                 .WriteTo.File($"RadeonAsmDebugServer_{_assemblyVersion}_.txt",
                     outputTemplate: _logTemplateFile,
@@ -44,20 +44,25 @@ namespace VSRAD.DebugServer.Logging
                 .CreateLogger();
         }
 
+        public void SetLogLevel(bool verbose) =>
+            _loggingLevel.MinimumLevel = verbose ? LogEventLevel.Verbose : LogEventLevel.Information;
+
         public ClientLogger CreateClientLogger(uint clientId) =>
             new ClientLogger(_logger.ForContext("Context", $"[Client #{clientId}]"));
 
-        public void ServerStarted(CliOptions options)
+        public void ServerStartException(EndPoint localEndpoint, Exception e) =>
+            _logger.Error(e, $"Failed to start the server on endpoint {localEndpoint}");
+
+        public void ServerStarted(EndPoint localEndpoint)
         {
-            LoggingLevel.MinimumLevel = options.Verbose ? LogEventLevel.Verbose : LogEventLevel.Information;
-            var verboseInfo = options.Verbose ? "Verbose mode." : "Use -v option to enable verbose mode.";
-            _logger.Information($"{_assemblyName} {_assemblyVersion} is running on port {options.Port}. {verboseInfo}");
+            var verboseInfo = _loggingLevel.MinimumLevel == LogEventLevel.Verbose ? "Verbose mode." : "Use -v option to enable verbose mode.";
+            _logger.Information($"{_assemblyName} {_assemblyVersion} is listening on {localEndpoint}. {verboseInfo}");
         }
 
         public void Usage()
         {
-            _logger.Information($"Usage: {_executableName} [port] [-v|--verbose]");
-            _logger.Information("    port          (Default: 9339) Run the server on the specified TCP port");
+            _logger.Information($"Usage: {_executableName} [endpoint] [-v|--verbose]");
+            _logger.Information("    endpoint      (Default: 0.0.0.0:9339) Listen on the specified TCP endpoint");
             _logger.Information("    -v, --verbose Print stdout and stderr of executing commands");
         }
     }
