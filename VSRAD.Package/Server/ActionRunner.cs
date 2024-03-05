@@ -51,7 +51,7 @@ namespace VSRAD.Package.Server
         {
             var runStats = new ActionRunResult(actionName, steps, continueOnError);
 
-            await FillInitialTimestampsAsync(steps);
+            await FillInitialTimestampsAsync(steps, cancellationToken);
             runStats.RecordInitTimestampFetch();
 
             for (int i = 0; i < steps.Count; ++i)
@@ -62,7 +62,7 @@ namespace VSRAD.Package.Server
                 switch (steps[i])
                 {
                     case CopyFileStep copyFile:
-                        result = await DoCopyFileAsync(copyFile);
+                        result = await DoCopyFileAsync(copyFile, cancellationToken);
                         break;
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute, cancellationToken);
@@ -77,7 +77,7 @@ namespace VSRAD.Package.Server
                         result = await DoWriteDebugTargetAsync(writeDebugTarget);
                         break;
                     case ReadDebugDataStep readDebugData:
-                        result = await DoReadDebugDataAsync(readDebugData);
+                        result = await DoReadDebugDataAsync(readDebugData, cancellationToken);
                         break;
                     default:
                         throw new NotImplementedException();
@@ -91,14 +91,14 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
+        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step, CancellationToken cancellationToken)
         {
             IList<FileMetadata> sourceFiles, targetFiles;
             // List all source files
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new ListFilesCommand { Path = step.SourcePath, IncludeSubdirectories = step.IncludeSubdirectories };
-                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, cancellationToken);
                 sourceFiles = response.Files;
             }
             else
@@ -114,7 +114,7 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 var command = new ListFilesCommand { Path = step.TargetPath, IncludeSubdirectories = step.IncludeSubdirectories };
-                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, cancellationToken);
                 targetFiles = response.Files;
             }
             else
@@ -137,13 +137,13 @@ namespace VSRAD.Package.Server
                     && sourceFiles[0].LastWriteTimeUtc == targetFiles[0].LastWriteTimeUtc)
                     return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
 
-                return await DoCopySingleFileAsync(step);
+                return await DoCopySingleFileAsync(step, cancellationToken);
             }
             // Copying a directory?
-            return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles);
+            return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles, cancellationToken);
         }
 
-        private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles)
+        private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles, CancellationToken cancellationToken)
         {
             /* Retrieve source files */
             var files = new List<PackedFile>();
@@ -167,7 +167,7 @@ namespace VSRAD.Package.Server
                 if (step.Direction == FileCopyDirection.RemoteToLocal)
                 {
                     var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
-                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
+                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command, cancellationToken);
 
                     if (response.Status != GetFilesStatus.Successful)
                         return new StepResult(false, $"Failed to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
@@ -195,7 +195,7 @@ namespace VSRAD.Package.Server
                 ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command, cancellationToken);
 
                 if (response.Status == PutDirectoryStatus.TargetPathIsFile)
                     return new StepResult(false, $"Directory cannot be copied. The target path on the remote machine is a file: {step.SourcePath}", "");
@@ -226,14 +226,14 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
-        private async Task<StepResult> DoCopySingleFileAsync(CopyFileStep step)
+        private async Task<StepResult> DoCopySingleFileAsync(CopyFileStep step, CancellationToken cancellationToken)
         {
             byte[] sourceContents;
             /* Read source file */
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new FetchResultRange { FilePath = new[] { step.SourcePath } };
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command, cancellationToken);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"Data is missing. File is not found on the remote machine at {step.SourcePath}", "");
                 sourceContents = response.Data;
@@ -249,7 +249,7 @@ namespace VSRAD.Package.Server
                 ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = "" };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
+                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command, cancellationToken);
 
                 if (response.Status == PutFileStatus.PermissionDenied)
                     return new StepResult(false, $"Access is denied to remote file at {step.TargetPath}", "");
@@ -280,7 +280,7 @@ namespace VSRAD.Package.Server
             if (step.Environment == StepEnvironment.Local)
                 response = await new ObservableProcess(command).StartAndObserveAsync(cancellationToken);
             else
-                response = await _channel.SendWithReplyAsync<ExecutionCompleted>(command);
+                response = await _channel.SendWithReplyAsync<ExecutionCompleted>(command, cancellationToken);
 
             var log = new StringBuilder();
             var status = response.Status == ExecutionStatus.Completed ? $"exit code {response.ExitCode}"
@@ -339,7 +339,7 @@ namespace VSRAD.Package.Server
             return Task.FromResult(new StepResult(true, "", ""));
         }
 
-        private async Task<StepResult> DoReadDebugDataAsync(ReadDebugDataStep step)
+        private async Task<StepResult> DoReadDebugDataAsync(ReadDebugDataStep step, CancellationToken cancellationToken)
         {
             BreakTarget breakTarget;
             {
@@ -348,14 +348,14 @@ namespace VSRAD.Package.Server
             }
             string validWatchesString;
             {
-                var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp);
+                var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp, cancellationToken);
                 if (!result.TryGetResult(out var data, out var error))
                     return new StepResult(false, error.Message, "", breakState: null);
                 validWatchesString = Encoding.UTF8.GetString(data);
             }
             string dispatchParamsString;
             {
-                var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp);
+                var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp, cancellationToken);
                 if (!result.TryGetResult(out var data, out var error))
                     return new StepResult(false, error.Message, "", breakState: null);
                 dispatchParamsString = Encoding.UTF8.GetString(data);
@@ -369,7 +369,7 @@ namespace VSRAD.Package.Server
 
                 if (step.OutputFile.IsRemote())
                 {
-                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput });
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput }, cancellationToken);
 
                     if (response.Status == FetchStatus.FileNotFound)
                         return new StepResult(false, $"Debug data is missing. Output file could not be found on the remote machine at {outputPath}", "", breakState: null);
@@ -403,12 +403,12 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private async Task<Result<byte[]>> ReadDebugDataFileAsync(string type, string path, bool isRemote, bool checkTimestamp)
+        private async Task<Result<byte[]>> ReadDebugDataFileAsync(string type, string path, bool isRemote, bool checkTimestamp, CancellationToken cancellationToken)
         {
             var initTimestamp = GetInitialFileTimestamp(path);
             if (isRemote)
             {
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { path } });
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { path } }, cancellationToken);
 
                 if (response.Status == FetchStatus.FileNotFound)
                     return new Error($"{type} data is missing. File could not be found on the remote machine at {path}");
@@ -477,7 +477,7 @@ namespace VSRAD.Package.Server
             return false;
         }
 
-        private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps)
+        private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, CancellationToken cancellationToken)
         {
             foreach (var step in steps)
             {
@@ -485,7 +485,7 @@ namespace VSRAD.Package.Server
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } })).Timestamp;
+                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } }, cancellationToken)).Timestamp;
                     else
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
@@ -498,7 +498,7 @@ namespace VSRAD.Package.Server
                             continue;
                         if (file.IsRemote())
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                                new FetchMetadata { FilePath = new[] { file.Path } })).Timestamp;
+                                new FetchMetadata { FilePath = new[] { file.Path } }, cancellationToken)).Timestamp;
                         else
                             _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }

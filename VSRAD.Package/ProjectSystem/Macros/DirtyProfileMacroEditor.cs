@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using VSRAD.Package.Options;
@@ -92,7 +93,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     {
                         try
                         {
-                            return await _channel.GetRemoteEnvironmentAsync().ConfigureAwait(false);
+                            return await _channel.GetRemoteEnvironmentAsync(CancellationToken.None).ConfigureAwait(false);
                         }
                         catch (ConnectionRefusedException)
                         {

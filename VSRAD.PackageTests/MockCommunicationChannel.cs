@@ -1,6 +1,7 @@
 ﻿using Moq;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -32,26 +33,26 @@ namespace VSRAD.PackageTests
         {
             _mock = new Mock<ICommunicationChannel>();
             _mock
-                .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<Execute>()))
-                .Returns<ICommand>((c) => Task.FromResult((ExecutionCompleted)HandleCommand(c)));
+                .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<Execute>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((ExecutionCompleted)HandleCommand(c)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<MetadataFetched>(It.IsAny<FetchMetadata>()))
-                .Returns<ICommand>((c) => Task.FromResult((MetadataFetched)HandleCommand(c)));
+                .Setup((c) => c.SendWithReplyAsync<MetadataFetched>(It.IsAny<FetchMetadata>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((MetadataFetched)HandleCommand(c)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<ResultRangeFetched>(It.IsAny<FetchResultRange>()))
-                .Returns<ICommand>((c) => Task.FromResult((ResultRangeFetched)HandleCommand(c)));
+                .Setup((c) => c.SendWithReplyAsync<ResultRangeFetched>(It.IsAny<FetchResultRange>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((ResultRangeFetched)HandleCommand(c)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<PutFileResponse>(It.IsAny<PutFileCommand>()))
-                .Returns<ICommand>((c) => Task.FromResult((PutFileResponse)HandleCommand(c)));
+                .Setup((c) => c.SendWithReplyAsync<PutFileResponse>(It.IsAny<PutFileCommand>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((PutFileResponse)HandleCommand(c)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<PutDirectoryResponse>(It.IsAny<PutDirectoryCommand>()))
-                .Returns<ICommand>((c) => Task.FromResult((PutDirectoryResponse)HandleCommand(c)));
+                .Setup((c) => c.SendWithReplyAsync<PutDirectoryResponse>(It.IsAny<PutDirectoryCommand>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((PutDirectoryResponse)HandleCommand(c)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<ListFilesResponse>(It.IsAny<ListFilesCommand>()))
-                .Returns<ICommand>((c) => Task.FromResult((ListFilesResponse)HandleCommand(c)));
+                .Setup((c) => c.SendWithReplyAsync<ListFilesResponse>(It.IsAny<ListFilesCommand>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((ListFilesResponse)HandleCommand(c)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<GetFilesResponse>(It.IsAny<GetFilesCommand>()))
-                .Returns<ICommand>((c) => Task.FromResult((GetFilesResponse)HandleCommand(c)));
+                .Setup((c) => c.SendWithReplyAsync<GetFilesResponse>(It.IsAny<GetFilesCommand>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((GetFilesResponse)HandleCommand(c)));
         }
 
         public void ThenRespond<TCommand, TResponse>(TResponse response, Action<TCommand> processCallback)

@@ -7,7 +7,6 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -163,10 +162,10 @@ namespace VSRAD.Package.ProjectSystem
                 var projectProperties = _project.GetProjectProperties();
                 var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
                     ? null
-                    : new AsyncLazy<IReadOnlyDictionary<string, string>>(_channel.GetRemoteEnvironmentAsync, ThreadHelper.JoinableTaskFactory);
+                    : new AsyncLazy<IReadOnlyDictionary<string, string>>(() => _channel.GetRemoteEnvironmentAsync(_runningActionTokenSource.Token), ThreadHelper.JoinableTaskFactory);
                 var remotePlatform = _project.Options.Profile.General.RunActionsLocally
                     ? System.Runtime.InteropServices.OSPlatform.Windows
-                    : await _channel.GetRemotePlatformAsync();
+                    : await _channel.GetRemotePlatformAsync(_runningActionTokenSource.Token);
 
                 var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
 
@@ -174,7 +173,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (!generalResult.TryGetResult(out var general, out var evalError))
                     return evalError;
 
-                var actionTransients = new ActionEvaluationTransients(general.LocalWorkDir, general.RemoteWorkDir, general.RunActionsLocally,
+                var actionTransients = new Options.ActionEvaluationTransients(general.LocalWorkDir, general.RemoteWorkDir, general.RunActionsLocally,
                     remotePlatform, _project.Options.Profile.Actions);
                 var evalResult = await action.EvaluateAsync(evaluator, actionTransients);
                 if (!evalResult.TryGetResult(out action, out evalError))

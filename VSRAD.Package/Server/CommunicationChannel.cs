@@ -24,11 +24,11 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
+        Task<T> SendWithReplyAsync<T>(ICommand command, CancellationToken cancellationToken) where T : IResponse;
 
-        Task<OSPlatform> GetRemotePlatformAsync();
+        Task<OSPlatform> GetRemotePlatformAsync(CancellationToken cancellationToken);
 
-        Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
+        Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync(CancellationToken cancellationToken);
 
         void ForceDisconnect();
     }
@@ -104,12 +104,12 @@ namespace VSRAD.Package.Server
             });
         }
 
-        public async Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse
+        public async Task<T> SendWithReplyAsync<T>(ICommand command, CancellationToken cancellationToken) where T : IResponse
         {
-            await _sendMutex.WaitAsync();
+            await _sendMutex.WaitAsync(cancellationToken);
             try
             {
-                return await SendWithReplyAsync<T>(command, tryReconnect: true);
+                return await SendWithReplyAsync<T>(command, reconnectOnError: true, cancellationToken);
             }
             finally
             {
@@ -117,17 +117,20 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private async Task<T> SendWithReplyAsync<T>(ICommand command, bool tryReconnect) where T : IResponse
+        private async Task<T> SendWithReplyAsync<T>(ICommand command, bool reconnectOnError, CancellationToken cancellationToken) where T : IResponse
         {
             try
             {
-                await EstablishServerConnectionAsync().ConfigureAwait(false);
-                var bytesSent = await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Sent command ({bytesSent} bytes) to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
+                await EstablishServerConnectionAsync(cancellationToken).ConfigureAwait(false);
+                using (cancellationToken.Register(ForceDisconnect))
+                {
+                    var bytesSent = await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
+                    await _outputWindowWriter.PrintMessageAsync($"Sent command ({bytesSent} bytes) to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
 
-                var (response, bytesReceived) = await _connection.GetStream().ReadSerializedResponseAsync<T>().ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Received response ({bytesReceived} bytes) from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
-                return response;
+                    var (response, bytesReceived) = await _connection.GetStream().ReadSerializedResponseAsync<T>().ConfigureAwait(false);
+                    await _outputWindowWriter.PrintMessageAsync($"Received response ({bytesReceived} bytes) from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
+                    return response;
+                }
             }
             catch (ObjectDisposedException) // ForceDisconnect has been called within the try block 
             {
@@ -136,10 +139,10 @@ namespace VSRAD.Package.Server
             catch (Exception e) when (!(e is UnsupportedServerVersionException || e is UnsupportedExtensionVersionException))
             {
                 ForceDisconnect(); // At this point, the stream may be corrupted while we are still connected (e.g. in case of EndOfStreamException), so close the connection first
-                if (tryReconnect)
+                if (reconnectOnError)
                 {
                     await _outputWindowWriter.PrintMessageAsync($"Connection to {ConnectionOptions} lost, attempting to reconnect...").ConfigureAwait(false);
-                    return await SendWithReplyAsync<T>(command, false);
+                    return await SendWithReplyAsync<T>(command, reconnectOnError: false, cancellationToken);
                 }
                 else
                 {
@@ -149,17 +152,17 @@ namespace VSRAD.Package.Server
             }
         }
 
-        public async Task<OSPlatform> GetRemotePlatformAsync()
+        public async Task<OSPlatform> GetRemotePlatformAsync(CancellationToken cancellationToken)
         {
-            await EstablishServerConnectionAsync().ConfigureAwait(false);
+            await EstablishServerConnectionAsync(cancellationToken).ConfigureAwait(false);
             return _remotePlatform;
         }
 
-        public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()
+        public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync(CancellationToken cancellationToken)
         {
             if (_remoteEnvironment == null)
             {
-                var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables()).ConfigureAwait(false);
+                var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables(), cancellationToken).ConfigureAwait(false);
                 _remoteEnvironment = environment.Variables;
             }
             return _remoteEnvironment;
@@ -173,7 +176,7 @@ namespace VSRAD.Package.Server
             ConnectionState = ClientState.Disconnected;
         }
 
-        private async Task EstablishServerConnectionAsync()
+        private async Task EstablishServerConnectionAsync(CancellationToken cancellationToken)
         {
             if (_connection != null && _connection.Connected) return;
 
@@ -181,7 +184,8 @@ namespace VSRAD.Package.Server
             var client = new TcpClient();
             try
             {
-                using (var cts = new CancellationTokenSource(_connectionTimeout))
+                using (var timeoutCts = new CancellationTokenSource(_connectionTimeout))
+                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken))
                 using (cts.Token.Register(() => client.Dispose()))
                 {
                     await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port).ConfigureAwait(false);
@@ -199,7 +203,7 @@ namespace VSRAD.Package.Server
             try
             {
                 var exchangeVersionsCommand = new ExchangeVersionsCommand { ClientPlatform = OSPlatform.Windows, ClientVersion = _extensionVersion };
-                var versionResponse = await SendWithReplyAsync<ExchangeVersionsResponse>(exchangeVersionsCommand, tryReconnect: false).ConfigureAwait(false);
+                var versionResponse = await SendWithReplyAsync<ExchangeVersionsResponse>(exchangeVersionsCommand, reconnectOnError: false, cancellationToken).ConfigureAwait(false);
                 if (versionResponse.Status == ExchangeVersionsStatus.ClientVersionUnsupported)
                     throw new UnsupportedExtensionVersionException(ConnectionOptions, versionResponse.ServerVersion);
                 if (versionResponse.ServerVersion < Constants.MinimalRequiredServerVersion)
