@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using VSRAD.Package.Options;
@@ -34,7 +35,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
 
-            return await step.EvaluateAsync(evaluator, _dirtyProfile, sourceAction);
+            var evalTransients = new ActionEvaluationTransients("", "", _dirtyProfile.General.RunActionsLocally,
+                System.Runtime.InteropServices.OSPlatform.Windows, _dirtyProfile.Actions);
+
+            return await step.EvaluateAsync(evaluator, evalTransients, sourceAction);
         }
 
         public async Task EditObjectPropertyAsync(object target, string propertyName)
@@ -89,7 +93,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     {
                         try
                         {
-                            return await _channel.GetRemoteEnvironmentAsync().ConfigureAwait(false);
+                            return await _channel.GetRemoteEnvironmentAsync(CancellationToken.None).ConfigureAwait(false);
                         }
                         catch (ConnectionRefusedException)
                         {

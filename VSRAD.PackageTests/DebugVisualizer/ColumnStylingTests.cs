@@ -27,7 +27,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             new BreakState(BreakTarget.Empty, new Dictionary<string, WatchMeta>(),
                 new BreakStateDispatchParameters(waveSize: waveSize, gridX: groupSize, gridY: 1, gridZ: 1, groupX: groupSize, groupY: 1, groupZ: 1, ""),
                 new Dictionary<uint, uint>(), dwordsPerLane: 1,
-                new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: (int)groupSize), checkMagicNumber: null);
+                new BreakStateOutputFile("", false, 0, default, dwordCount: (int)groupSize), checkMagicNumber: null);
 
         [Fact]
         public void VisibilityTest()

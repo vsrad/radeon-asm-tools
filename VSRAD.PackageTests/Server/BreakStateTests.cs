@@ -39,7 +39,7 @@ namespace VSRAD.PackageTests.Server
             var dwordsPerGroup = wavesPerGroup * waveSize * dwordsPerLane;
             var dwordsInBuffer = groupCount * dwordsPerGroup;
 
-            var file = new BreakStateOutputFile(new[] { "/working/dir", "debug_buffer.bin" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: (int)dwordsInBuffer);
+            var file = new BreakStateOutputFile("/working/dir/debug_buffer.bin", binaryOutput: true, offset: 0, timestamp: default, dwordCount: (int)dwordsInBuffer);
             var breakState = MakeBreakState(watches, dwordsPerLane, file, groupSize, waveSize);
 
             var data = new uint[dwordsInBuffer];
@@ -144,13 +144,13 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var watches = new Dictionary<string, WatchMeta> { { "ThreadID", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) } };
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
+            var file = new BreakStateOutputFile("/home/kyubey/projects/log.tar", binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
             var breakState = MakeBreakState(watches, dwordsPerLane: 2, file, groupSize: 512, waveSize: 64);
 
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Array.Empty<byte>() },
             (command) =>
             {
-                Assert.Equal(new[] { "/home/kyubey/projects", "log.tar" }, command.FilePath);
+                Assert.Equal(new[] { "/home/kyubey/projects/log.tar" }, command.FilePath);
             });
             var warning = await breakState.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0);
             Assert.Equal("Group #0 is incomplete: expected to read 4096 bytes but the output file contains 0.", warning);
@@ -192,7 +192,7 @@ namespace VSRAD.PackageTests.Server
                 { "GlobalID", new WatchMeta(new[] { (Instance: instanceId, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
                 { "ThreadID", new WatchMeta(new[] { (Instance: instanceId, DataSlot: (uint?)2, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
             };
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: data.Length);
+            var file = new BreakStateOutputFile("/home/kyubey/projects/log.tar", binaryOutput: true, offset: 0, timestamp: default, dwordCount: data.Length);
             var breakState = MakeBreakState(watches, dwordsPerLane: 3, file, groupSize, waveSize, localData);
 
             uint groupId = 1;

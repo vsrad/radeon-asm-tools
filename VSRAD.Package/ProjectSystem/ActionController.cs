@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Imaging;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
@@ -163,24 +162,29 @@ namespace VSRAD.Package.ProjectSystem
                 var projectProperties = _project.GetProjectProperties();
                 var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
                     ? null
-                    : new AsyncLazy<IReadOnlyDictionary<string, string>>(_channel.GetRemoteEnvironmentAsync, ThreadHelper.JoinableTaskFactory);
+                    : new AsyncLazy<IReadOnlyDictionary<string, string>>(() => _channel.GetRemoteEnvironmentAsync(_runningActionTokenSource.Token), ThreadHelper.JoinableTaskFactory);
+                var remotePlatform = _project.Options.Profile.General.RunActionsLocally
+                    ? System.Runtime.InteropServices.OSPlatform.Windows
+                    : await _channel.GetRemotePlatformAsync(_runningActionTokenSource.Token);
 
                 var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
 
                 var generalResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);
                 if (!generalResult.TryGetResult(out var general, out var evalError))
                     return evalError;
-                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
+
+                var actionTransients = new Options.ActionEvaluationTransients(general.LocalWorkDir, general.RemoteWorkDir, general.RunActionsLocally,
+                    remotePlatform, _project.Options.Profile.Actions);
+                var evalResult = await action.EvaluateAsync(evaluator, actionTransients);
                 if (!evalResult.TryGetResult(out action, out evalError))
                     return evalError;
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _projectSourceManager.SaveProjectState();
 
-                var continueOnError = _project.Options.Profile.General.ContinueActionExecOnError;
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget);
+                var env = new ActionEnvironment(watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
-                var runResult = await runner.RunAsync(action.Name, action.Steps, continueOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
+                var runResult = await runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
                 return runResult;
             }
             finally

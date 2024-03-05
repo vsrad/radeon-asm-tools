@@ -26,6 +26,11 @@ namespace VSRAD.Package
         public static bool operator !=(Error left, Error right) => !(left == right);
     }
 
+    public class UserException : Exception
+    {
+        public UserException(string message) : base(message) { }
+    }
+
     public static class Errors
     {
         public delegate void CreateMessageBoxImpl(string message, string title, OLEMSGICON icon);
@@ -54,11 +59,10 @@ namespace VSRAD.Package
             // Cancelled operations are usually triggered by the user or are accompanied by a more descriptive message.
             if (e is OperationCanceledException) return;
 
-#if DEBUG
-            ShowCritical(e.Message + "\r\n\r\n" + e.StackTrace);
-#else
-            ShowCritical(e.Message);
-#endif
+            if (typeof(UserException).IsAssignableFrom(e.GetType())) // Caused by user input/environment, intended to bubble up
+                ShowCritical(e.Message);
+            else // Caused by a bug: make diagnosing it easier by printing the stacktrace
+                ShowCritical(e.Message + "\r\n\r\n" + e.StackTrace, title: "An unexpected error occurred in RAD Debugger");
         }
 
         public static void RunAsyncWithErrorHandling(this JoinableTaskFactory taskFactory, Func<Task> method, Action exceptionCallbackOnMainThread = null) =>

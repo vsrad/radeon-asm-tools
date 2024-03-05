@@ -24,63 +24,102 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task CopyFileStepEmptyPathsTestAsync()
+        public async Task CopyFileStepsPathResolutionTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
 
+            var transientsLnx = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
+            var transientsWin = new ActionEvaluationTransients(@"C:\Local", @"C:\Remote\", false, System.Runtime.InteropServices.OSPlatform.Windows, new[] { a });
+
+            a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "linux/rel", TargetPath = @"windows\rel" });
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), transientsLnx)).TryGetResult(out var evaluated, out _));
+            Assert.Equal("/remote/linux/rel", ((CopyFileStep)evaluated.Steps[0]).SourcePath);
+            Assert.Equal(@"C:\Local\windows\rel", ((CopyFileStep)evaluated.Steps[0]).TargetPath);
+
+            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/linux/abs/path", TargetPath = @"D:\Windows\Abs\Path" };
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), transientsLnx)).TryGetResult(out evaluated, out _));
+            Assert.Equal("/linux/abs/path", ((CopyFileStep)evaluated.Steps[0]).SourcePath);
+            Assert.Equal(@"D:\Windows\Abs\Path", ((CopyFileStep)evaluated.Steps[0]).TargetPath);
+
+            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = @"windows\rel", TargetPath = @"windows\rel" };
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), transientsWin)).TryGetResult(out evaluated, out _));
+            Assert.Equal(@"C:\Local\windows\rel", ((CopyFileStep)evaluated.Steps[0]).SourcePath);
+            Assert.Equal(@"C:\Remote\windows\rel", ((CopyFileStep)evaluated.Steps[0]).TargetPath);
+
+            // Invalid paths
+
+            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "windows>_<", TargetPath = "target" };
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transientsWin)).TryGetResult(out _, out var error));
+            Assert.Equal(@"Path contains illegal characters: ""windows>_<""" + "\r\n" + @"Working directory: ""C:\Local""", error.Message);
+
+            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "source", TargetPath = "target?|" };
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transientsWin)).TryGetResult(out _, out error));
+            Assert.Equal(@"Path contains illegal characters: ""target?|""" + "\r\n" + @"Working directory: ""C:\Remote\""", error.Message);
+
+            var transientsInvalidPath = new ActionEvaluationTransients("", @"C:|Remote", false, System.Runtime.InteropServices.OSPlatform.Windows, new[] { a });
+
+            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "source", TargetPath = "target" };
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transientsInvalidPath)).TryGetResult(out _, out error));
+            Assert.Equal(@"Path contains illegal characters: ""target""" + "\r\n" + @"Working directory: ""C:|Remote""", error.Message);
+        }
+
+        [Fact]
+        public async Task CopyFileStepEmptyPathsTestAsync()
+        {
+            var a = new ActionProfileOptions { Name = "A" };
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
+
             a.Steps.Add(new CopyFileStep { SourcePath = "", TargetPath = "target" });
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal("No source path specified", error.Message);
 
             ((CopyFileStep)a.Steps[0]).SourcePath = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), transients)).TryGetResult(out _, out error));
             Assert.Equal("The specified source path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
 
             ((CopyFileStep)a.Steps[0]).SourcePath = "source";
             ((CopyFileStep)a.Steps[0]).TargetPath = "";
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out error));
             Assert.Equal("No target path specified", error.Message);
 
             ((CopyFileStep)a.Steps[0]).TargetPath = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), transients)).TryGetResult(out _, out error));
             Assert.Equal("The specified target path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
         public async Task ExecuteStepEmptyExecutableTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
 
             a.Steps.Add(new ExecuteStep { Executable = "" });
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal("No executable specified", error.Message);
 
             ((ExecuteStep)a.Steps[0]).Executable = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), transients)).TryGetResult(out _, out error));
             Assert.Equal("The specified executable (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
         public async Task OpenInEditorStepEmptyPathTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
 
             a.Steps.Add(new OpenInEditorStep { Path = "      " });
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal("No file path specified", error.Message);
 
             ((OpenInEditorStep)a.Steps[0]).Path = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), transients)).TryGetResult(out _, out error));
             Assert.Equal("The specified file path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
         public async Task RunActionStepDetectsLoopsTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new ExecuteStep { Executable = "-" });
             a.Steps.Add(new RunActionStep { Name = "A_nested" });
@@ -91,11 +130,9 @@ namespace VSRAD.PackageTests.Server
             b.Steps.Add(new OpenInEditorStep { Path = "-" });
             b.Steps.Add(new RunActionStep { Name = "A" });
 
-            profile.Actions.Add(a);
-            profile.Actions.Add(aNested);
-            profile.Actions.Add(b);
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a, aNested, b });
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal(@"Run Action step failed in ""A"" <- ""B"" <- ""A_nested"" <- ""A""", error.Title);
             Assert.Equal(@"Circular dependency between actions", error.Message);
         }
@@ -103,12 +140,12 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionStepRefersToSelfTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "A" });
-            profile.Actions.Add(a);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
+
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal(@"Run Action step failed in ""A"" <- ""A""", error.Title);
             Assert.Equal(@"Circular dependency between actions", error.Message);
         }
@@ -116,7 +153,6 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionStepReportsMissingActionsTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
             var b = new ActionProfileOptions { Name = "B" };
@@ -124,15 +160,13 @@ namespace VSRAD.PackageTests.Server
             var c = new ActionProfileOptions { Name = "C" };
             c.Steps.Add(new RunActionStep { Name = "D" });
 
-            profile.Actions.Add(a);
-            profile.Actions.Add(b);
-            profile.Actions.Add(c);
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a, b, c });
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal(@"Run Action step failed in ""C"" <- ""B"" <- ""A""", error.Title);
             Assert.Equal(@"Action ""D"" is not found", error.Message);
 
-            Assert.False((await c.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.False((await c.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out error));
             Assert.Equal(@"Run Action step failed in ""C""", error.Title);
             Assert.Equal(@"Action ""D"" is not found", error.Message);
         }
@@ -140,19 +174,18 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionNoActionTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
             var b = new ActionProfileOptions { Name = "B" };
             b.Steps.Add(new RunActionStep { Name = "" });
-            profile.Actions.Add(a);
-            profile.Actions.Add(b);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a, b });
+
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal(@"Run Action step failed in ""B"" <- ""A""", error.Title);
             Assert.Equal(@"No action specified", error.Message);
 
-            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out error));
             Assert.Equal(@"Run Action step failed in ""B""", error.Title);
             Assert.Equal(@"No action specified", error.Message);
         }
@@ -160,22 +193,20 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionUnconfiguredReferenceTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
             var b = new ActionProfileOptions { Name = "B" };
             b.Steps.Add(new RunActionStep { Name = "C" });
             var c = new ActionProfileOptions { Name = "C" };
             c.Steps.Add(new CopyFileStep());
-            profile.Actions.Add(a);
-            profile.Actions.Add(b);
-            profile.Actions.Add(c);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a, b, c });
+
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal(@"Copy File step failed in ""C"" <- ""B"" <- ""A""", error.Title);
             Assert.Equal(@"No source path specified", error.Message);
 
-            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out error));
             Assert.Equal(@"Copy File step failed in ""C"" <- ""B""", error.Title);
             Assert.Equal(@"No source path specified", error.Message);
         }
@@ -183,11 +214,12 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task ReadDebugDataEmptyOutputPathTestAsync()
         {
-            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
-
             a.Steps.Add(new ReadDebugDataStep());
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
+
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal(@"Read Debug Data step failed in ""A""", error.Title);
             Assert.Equal("Debug data path is not specified", error.Message);
         }
@@ -195,9 +227,6 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionsLocallyTestAsync()
         {
-            var profile = new ProfileOptions();
-            profile.General.RunActionsLocally = true;
-
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "lr-copy-source", TargetPath = "lr-copy-target" });
             a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rl-copy-source", TargetPath = "rl-copy-target" });
@@ -210,8 +239,9 @@ namespace VSRAD.PackageTests.Server
                 dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status", CheckTimestamp = false },
                 binaryOutput: true, outputOffset: 0, magicNumber: null));
 
-            profile.General.RunActionsLocally = false;
-            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out var result, out _));
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
+
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out var result, out _));
             {
                 var copyFileLR = (CopyFileStep)result.Steps[0];
                 Assert.Equal(FileCopyDirection.LocalToRemote, copyFileLR.Direction);
@@ -239,8 +269,8 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal(StepEnvironment.Remote, readDebugData.WatchesFile.Location);
             }
 
-            profile.General.RunActionsLocally = true;
-            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out result, out _));
+            var transientsLocal = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: true, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), transientsLocal)).TryGetResult(out result, out _));
             {
                 var copyFileLR = (CopyFileStep)result.Steps[0]; /* LocalToRemote becomes LocalToLocal */
                 Assert.Equal(FileCopyDirection.LocalToLocal, copyFileLR.Direction);

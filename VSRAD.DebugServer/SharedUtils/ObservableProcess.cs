@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
 
-namespace VSRAD.DebugServer
+namespace VSRAD.DebugServer.SharedUtils
 {
     public sealed class ObservableProcess
     {

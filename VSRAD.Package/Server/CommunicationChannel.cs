@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer;
@@ -12,10 +13,6 @@ using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using Task = System.Threading.Tasks.Task;
-using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
-using VSRAD.DebugServer.IPC.Commands;
 
 namespace VSRAD.Package.Server
 {
@@ -27,31 +24,33 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
+        Task<T> SendWithReplyAsync<T>(ICommand command, CancellationToken cancellationToken) where T : IResponse;
 
-        Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
+        Task<OSPlatform> GetRemotePlatformAsync(CancellationToken cancellationToken);
+
+        Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync(CancellationToken cancellationToken);
 
         void ForceDisconnect();
     }
 
-    public sealed class ConnectionRefusedException : IOException
+    public sealed class ConnectionRefusedException : UserException
     {
         public ConnectionRefusedException(ServerConnectionOptions connection) :
             base($"Unable to establish connection to a debug server at {connection}")
         { }
     }
 
-    public sealed class UnsupportedServerVersionException : IOException
+    public sealed class UnsupportedServerVersionException : UserException
     {
         public UnsupportedServerVersionException(ServerConnectionOptions connection, Version serverVersion) :
             base($"The debug server on host {connection} is out of date and missing critical features. Please update it to the {serverVersion} or above version.")
         { }
     }
 
-    public sealed class UnsupportedDebuggerVersionException : IOException
+    public sealed class UnsupportedExtensionVersionException : UserException
     {
-        public UnsupportedDebuggerVersionException(ServerConnectionOptions connection, Version serverVersion) :
-            base($"This extension is out of date and missing critical features to work with debug server on host {connection}. Please update extension to the {serverVersion} or above version.")
+        public UnsupportedExtensionVersionException(ServerConnectionOptions connection, Version serverVersion) :
+            base($"This extension is out of date and missing critical features to work with the debug server on host {connection}. Please update the extension to the {serverVersion} or above version.")
         { }
     }
 
@@ -69,7 +68,7 @@ namespace VSRAD.Package.Server
         public event Action ConnectionStateChanged;
         public ServerConnectionOptions ConnectionOptions =>
             _project.Options?.Connection ?? new ServerConnectionOptions("Remote address is not specified", 0);
-        private Version _extensionVersion;
+
         private ClientState _state = ClientState.Disconnected;
         public ClientState ConnectionState
         {
@@ -82,115 +81,88 @@ namespace VSRAD.Package.Server
         }
 
         private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 5);
-        private static readonly Regex _extensionVersionRegex = new Regex(@".*\/(?<version>.*)\/RadeonAsmDebugger\.dll", RegexOptions.Compiled);
 
+        private readonly SemaphoreSlim _sendMutex = new SemaphoreSlim(1);
         private readonly OutputWindowWriter _outputWindowWriter;
         private readonly IProject _project;
 
+        private Version _extensionVersion;
         private TcpClient _connection;
+        private OSPlatform _remotePlatform;
         private IReadOnlyDictionary<string, string> _remoteEnvironment;
 
-        private readonly SemaphoreSlim _mutex = new SemaphoreSlim(1);
-
         [ImportingConstructor]
-        public CommunicationChannel(SVsServiceProvider provider, IProject project)
+        public CommunicationChannel(SVsServiceProvider serviceProvider, IProject project)
         {
-            _outputWindowWriter = new OutputWindowWriter(provider,
+            _outputWindowWriter = new OutputWindowWriter(serviceProvider,
                 Constants.OutputPaneServerGuid, Constants.OutputPaneServerTitle);
             _project = project;
             _project.RunWhenLoaded((options) =>
-                options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); });
-            _extensionVersion = typeof(CommunicationChannel).Assembly.GetName().Version;
+            {
+                _extensionVersion = VSPackage.GetExtensionVersion(serviceProvider);
+                options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); };
+            });
         }
 
-        public Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse =>
-            SendWithReplyAsync<T>(command, tryReconnect: true);
-
-        private async Task TryProcessClientHandshakeAsync(TcpClient client)
+        public async Task<T> SendWithReplyAsync<T>(ICommand command, CancellationToken cancellationToken) where T : IResponse
         {
-            var writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
-            var reader = new StreamReader(client.GetStream(), Encoding.UTF8);
-
-            // Send client version to server
-            //
-            await writer.WriteLineAsync(_extensionVersion.ToString()).ConfigureAwait(false);
-            // Obtain server version
-            //
-            var serverResponse = await reader.ReadLineAsync().ConfigureAwait(false);
-            Version serverVersion = null;
-            if (!Version.TryParse(serverResponse, out serverVersion))
-            {
-                // Inform server that client declines serve's version
-                //
-                await writer.WriteLineAsync(HandShakeStatus.ClientNotAccepted.ToString()).ConfigureAwait(false);
-                throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
-            }
-
-            if (serverVersion.CompareTo(Constants.MinimalRequiredServerVersion) < 0)
-            {
-                // Inform client that server declines client's version
-                //
-                await writer.WriteLineAsync(HandShakeStatus.ClientNotAccepted.ToString()).ConfigureAwait(false);
-                throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
-            }
-
-            // Inform client that server accepts client's version
-            //
-            await writer.WriteLineAsync(HandShakeStatus.ClientAccepted.ToString()).ConfigureAwait(false);
-
-            // Check if client accepts server version
-            //
-            if (await reader.ReadLineAsync().ConfigureAwait(false) != HandShakeStatus.ServerAccepted.ToString())
-            {
-                throw new UnsupportedDebuggerVersionException(ConnectionOptions, serverVersion);
-            }
-            return;
-        }
-
-        private async Task<T> SendWithReplyAsync<T>(ICommand command, bool tryReconnect) where T : IResponse
-        {
-            await _mutex.WaitAsync();
+            await _sendMutex.WaitAsync(cancellationToken);
             try
             {
-                await EstablishServerConnectionAsync().ConfigureAwait(false);
-                await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Sent command to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
+                return await SendWithReplyAsync<T>(command, reconnectOnError: true, cancellationToken);
+            }
+            finally
+            {
+                _sendMutex.Release();
+            }
+        }
 
-                var response = await _connection.GetStream().ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Received response from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
-                return (T)response;
+        private async Task<T> SendWithReplyAsync<T>(ICommand command, bool reconnectOnError, CancellationToken cancellationToken) where T : IResponse
+        {
+            try
+            {
+                await EstablishServerConnectionAsync(cancellationToken).ConfigureAwait(false);
+                using (cancellationToken.Register(ForceDisconnect))
+                {
+                    var bytesSent = await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
+                    await _outputWindowWriter.PrintMessageAsync($"Sent command ({bytesSent} bytes) to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
+
+                    var (response, bytesReceived) = await _connection.GetStream().ReadSerializedResponseAsync<T>().ConfigureAwait(false);
+                    await _outputWindowWriter.PrintMessageAsync($"Received response ({bytesReceived} bytes) from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
+                    return response;
+                }
             }
             catch (ObjectDisposedException) // ForceDisconnect has been called within the try block 
             {
                 throw new OperationCanceledException();
             }
-            catch (Exception e)
+            catch (Exception e) when (!(e is UnsupportedServerVersionException || e is UnsupportedExtensionVersionException))
             {
-                if (tryReconnect)
+                ForceDisconnect(); // At this point, the stream may be corrupted while we are still connected (e.g. in case of EndOfStreamException), so close the connection first
+                if (reconnectOnError)
                 {
                     await _outputWindowWriter.PrintMessageAsync($"Connection to {ConnectionOptions} lost, attempting to reconnect...").ConfigureAwait(false);
-                    _mutex.Release();
-                    return await SendWithReplyAsync<T>(command, false);
+                    return await SendWithReplyAsync<T>(command, reconnectOnError: false, cancellationToken);
                 }
                 else
                 {
-                    ForceDisconnect();
                     await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to {ConnectionOptions}").ConfigureAwait(false);
-                    throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                    throw new UserException($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
                 }
-            }
-            finally
-            {
-                _mutex.Release();
             }
         }
 
-        public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()
+        public async Task<OSPlatform> GetRemotePlatformAsync(CancellationToken cancellationToken)
+        {
+            await EstablishServerConnectionAsync(cancellationToken).ConfigureAwait(false);
+            return _remotePlatform;
+        }
+
+        public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync(CancellationToken cancellationToken)
         {
             if (_remoteEnvironment == null)
             {
-                await EstablishServerConnectionAsync().ConfigureAwait(false);
-                var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables()).ConfigureAwait(false);
+                var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables(), cancellationToken).ConfigureAwait(false);
                 _remoteEnvironment = environment.Variables;
             }
             return _remoteEnvironment;
@@ -204,30 +176,44 @@ namespace VSRAD.Package.Server
             ConnectionState = ClientState.Disconnected;
         }
 
-        private async Task EstablishServerConnectionAsync()
+        private async Task EstablishServerConnectionAsync(CancellationToken cancellationToken)
         {
             if (_connection != null && _connection.Connected) return;
 
             ConnectionState = ClientState.Connecting;
-#pragma warning disable CA2000 // we save this client as a _connection later if handshake processed successfully
             var client = new TcpClient();
-#pragma warning restore CA2000 // Dispose objects before losing scope
             try
             {
-                using (var cts = new CancellationTokenSource(_connectionTimeout))
+                using (var timeoutCts = new CancellationTokenSource(_connectionTimeout))
+                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken))
                 using (cts.Token.Register(() => client.Dispose()))
                 {
                     await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port).ConfigureAwait(false);
-                    await TryProcessClientHandshakeAsync(client).ConfigureAwait(false);
                     _connection = client;
                     ConnectionState = ClientState.Connected;
                 }
             }
-            catch (Exception e) when (!(e is UnsupportedDebuggerVersionException) && !(e is UnsupportedServerVersionException))
+            catch (Exception)
             {
                 client.Dispose();
                 ConnectionState = ClientState.Disconnected;
                 throw new ConnectionRefusedException(ConnectionOptions);
+            }
+
+            try
+            {
+                var exchangeVersionsCommand = new ExchangeVersionsCommand { ClientPlatform = OSPlatform.Windows, ClientVersion = _extensionVersion };
+                var versionResponse = await SendWithReplyAsync<ExchangeVersionsResponse>(exchangeVersionsCommand, reconnectOnError: false, cancellationToken).ConfigureAwait(false);
+                if (versionResponse.Status == ExchangeVersionsStatus.ClientVersionUnsupported)
+                    throw new UnsupportedExtensionVersionException(ConnectionOptions, versionResponse.ServerVersion);
+                if (versionResponse.ServerVersion < Constants.MinimalRequiredServerVersion)
+                    throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
+                _remotePlatform = versionResponse.ServerPlatform;
+            }
+            catch (Exception)
+            {
+                ForceDisconnect();
+                throw;
             }
         }
     }

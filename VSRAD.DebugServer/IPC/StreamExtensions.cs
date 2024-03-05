@@ -9,31 +9,48 @@ namespace VSRAD.DebugServer
 {
     public static class StreamExtensions
     {
-        public static async Task<T> ReadSerializedMessageAsync<T>(this Stream stream)
+        public static async Task<(T, int)> ReadSerializedCommandAsync<T>(this Stream stream) where T : ICommand
         {
-            byte[] messageSizeBytes = new byte[4];
-            if (await stream.ReadAsync(messageSizeBytes, 0, 4).ConfigureAwait(false) != 4)
-            {
-                return default;
-            }
-            int bytesNum = BitConverter.ToInt32(messageSizeBytes, 0);
-            byte[] message = new byte[bytesNum];
+            byte[] messageLengthBytes = new byte[4];
+            if (await stream.ReadAsync(messageLengthBytes, 0, 4).ConfigureAwait(false) != 4)
+                throw new EndOfStreamException();
+
+            int messageLength = BitConverter.ToInt32(messageLengthBytes, 0);
+            byte[] messageBytes = new byte[messageLength];
 
             int buffered = 0;
-            while (buffered != bytesNum)
+            while (buffered != messageLength)
             {
-                var received = await stream.ReadAsync(message, buffered, bytesNum - buffered).ConfigureAwait(false);
+                var received = await stream.ReadAsync(messageBytes, buffered, messageLength - buffered).ConfigureAwait(false);
                 buffered += received;
-                if (buffered != bytesNum && received == 0)
-                {
-                    return default;
-                }
+                if (buffered != messageLength && received == 0)
+                    throw new EndOfStreamException();
             }
-            using (var memStream = new MemoryStream(message))
+            using (var memStream = new MemoryStream(messageBytes))
             using (var reader = new IPCReader(memStream))
+                return ((T)reader.ReadCommand(), messageLength);
+        }
+
+        public static async Task<(T, int)> ReadSerializedResponseAsync<T>(this Stream stream) where T : IResponse
+        {
+            byte[] messageLengthBytes = new byte[4];
+            if (await stream.ReadAsync(messageLengthBytes, 0, 4).ConfigureAwait(false) != 4)
+                throw new EndOfStreamException();
+
+            int messageLength = BitConverter.ToInt32(messageLengthBytes, 0);
+            byte[] messageBytes = new byte[messageLength];
+
+            int buffered = 0;
+            while (buffered != messageLength)
             {
-                return typeof(T) == typeof(ICommand) ? (T)reader.ReadCommand() : (T)reader.ReadResponse();
+                var received = await stream.ReadAsync(messageBytes, buffered, messageLength - buffered).ConfigureAwait(false);
+                buffered += received;
+                if (buffered != messageLength && received == 0)
+                    throw new EndOfStreamException();
             }
+            using (var memStream = new MemoryStream(messageBytes))
+            using (var reader = new IPCReader(memStream))
+                return ((T)reader.ReadResponse(), messageLength);
         }
 
         public static async Task<int> WriteSerializedMessageAsync<T>(this Stream stream, T message)

@@ -28,8 +28,10 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
+        <local:ActionEditorIfNotModifiedConverter x:Key="IfNotModifiedConverter"/>
         <utils:WpfMagicNumberConverter x:Key="MagicNumberConverter"/>
         <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
+        <utils:WpfInverseBoolConverter x:Key="InverseBoolConverter"/>
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenFalseConverter" TrueValue="Collapsed" FalseValue="Visible" />
     </UserControl.Resources>
@@ -56,7 +58,7 @@
                     </ItemsPanelTemplate>
                 </Menu.ItemsPanel>
                 <MenuItem Header="Execute" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:ExecuteStep}" />
-                <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:CopyFileStep}" />
+                <MenuItem Header="Copy File/Directory" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:CopyFileStep}" />
                 <MenuItem Header="Open in Editor" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:OpenInEditorStep}" />
                 <MenuItem Header="Run Action" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:RunActionStep}" />
                 <MenuItem Header="Write Debug Target" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:WriteDebugTargetStep}" />
@@ -135,6 +137,9 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
@@ -157,9 +162,25 @@
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
                                     Tag="TargetPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                            <Label Content="Check Source Timestamp:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
-                                      IsChecked="{Binding CheckTimestamp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Label Content="If not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <ComboBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
+                                      SelectedIndex="{Binding IfNotModified, Converter={StaticResource IfNotModifiedConverter}, Mode=TwoWay}">
+                                <ComboBoxItem Content="Copy"/>
+                                <ComboBoxItem Content="Do Not Copy"/>
+                                <ComboBoxItem Content="Fail"/>
+                            </ComboBox>
+
+                            <Label Content="Preserve Timestamps:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
+                                      IsChecked="{Binding PreserveTimestamps, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            
+                            <Label Content="Include Subdirectories:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
+                                      IsChecked="{Binding IncludeSubdirectories, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <Label Content="Use Compression:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"
+                                      IsChecked="{Binding UseCompression, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:ExecuteStep}">

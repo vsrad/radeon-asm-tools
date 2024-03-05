@@ -1,10 +1,12 @@
 ﻿using EnvDTE;
 using EnvDTE80;
+using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using VSRAD.Deborgar;
@@ -117,6 +119,24 @@ namespace VSRAD.Package
         {
             VisualizerToolWindow?.OnProjectUnloaded();
             OptionsToolWindow?.OnProjectUnloaded();
+        }
+
+        public static Version GetExtensionVersion(SVsServiceProvider serviceProvider)
+        {
+            var dte = (DTE2)serviceProvider.GetService(typeof(DTE));
+            Assumes.Present(dte);
+            var dteVersion = Version.Parse(dte.Version.Split(' ')[0]);
+            var extManagerVersion = new Version(dteVersion.Major == -1 ? 0 : dteVersion.Major, dteVersion.Minor == -1 ? 0 : dteVersion.Minor, 0, 0);
+            var extManagerAssembly = Assembly.Load($"Microsoft.VisualStudio.ExtensionManager, Version={extManagerVersion}, PublicKeyToken=b03f5f7f11d50a3a");
+            var extManagerType = extManagerAssembly.GetType("Microsoft.VisualStudio.ExtensionManager.SVsExtensionManager");
+            var extManagerIType = extManagerAssembly.GetType("Microsoft.VisualStudio.ExtensionManager.IVsExtensionManager");
+            var extManager = serviceProvider.GetService(extManagerType);
+            Assumes.Present(extManager);
+            var extManagerGetExtension = extManagerIType.GetMethod("GetInstalledExtension");
+            var extension = extManagerGetExtension.Invoke(extManager, new[] { "ba666db81-7abd-4a75-b906-895d8cc0616e" }); // ProductId from source.extension.vsixmanifest
+            var header = extension.GetType().GetProperty("Header").GetValue(extension);
+            var version = header.GetType().GetProperty("Version").GetValue(header);
+            return (Version)version;
         }
 
         int IOleCommandTarget.QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)

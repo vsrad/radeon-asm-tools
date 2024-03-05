@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
@@ -181,16 +182,16 @@ namespace VSRAD.Package.Server
             return waveStatus;
         }
 
-        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, uint groupIndex, bool fetchWholeFile = false)
+        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, uint groupIndex, bool fetchWholeFile = false, CancellationToken cancellationToken = default)
         {
             string warning = null;
             if (_fetchedDataWaves != null)
-                warning = await FetchFilePartAsync(channel, groupIndex, fetchWholeFile);
+                warning = await FetchFilePartAsync(channel, groupIndex, fetchWholeFile, cancellationToken);
             GroupIndex = groupIndex;
             return warning;
         }
 
-        private async Task<string> FetchFilePartAsync(ICommunicationChannel channel, uint groupIndex, bool fetchWholeFile)
+        private async Task<string> FetchFilePartAsync(ICommunicationChannel channel, uint groupIndex, bool fetchWholeFile, CancellationToken cancellationToken)
         {
             GetRequestedFilePart(groupIndex, fetchWholeFile, out var waveOffset, out var waveCount);
             if (IsFilePartFetched(waveOffset, waveCount))
@@ -203,12 +204,12 @@ namespace VSRAD.Package.Server
             var response = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
                 {
-                    FilePath = _outputFile.Path,
+                    FilePath = new[] { _outputFile.Path },
                     BinaryOutput = _outputFile.BinaryOutput,
                     ByteOffset = requestedByteOffset,
                     ByteCount = requestedByteCount,
                     OutputOffset = _outputFile.Offset
-                }).ConfigureAwait(false);
+                }, cancellationToken).ConfigureAwait(false);
 
             if (response.Status != DebugServer.IPC.Responses.FetchStatus.Successful)
                 return "Output file could not be opened.";

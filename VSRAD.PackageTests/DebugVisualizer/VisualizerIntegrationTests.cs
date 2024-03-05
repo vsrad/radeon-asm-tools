@@ -61,7 +61,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var debugData = TestHelper.ReadFixtureBytes("DebugBuffer.bin");
             Assert.True(BreakState.CreateBreakState(BreakTarget.Empty,
                 TestHelper.ReadFixtureLines("Watches.txt"), TestHelper.ReadFixture("ValidWatches.txt"), TestHelper.ReadFixture("DispatchParams.txt"),
-                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData, null).TryGetResult(out var breakState, out _));
+                new BreakStateOutputFile("", true, 0, default, debugData.Length / 4), debugData, null).TryGetResult(out var breakState, out _));
 
             vis.EnterBreak(breakState);
             vis.Context.GroupIndex.X = 13;
