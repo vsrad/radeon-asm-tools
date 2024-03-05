@@ -263,9 +263,7 @@ namespace VSRAD.Package.Options
                 Arguments = evaluatedArguments,
                 WorkingDirectory = evaluatedWorkdir,
                 RunAsAdmin = RunAsAdmin,
-                // The option to wait for completion is hidden in the UI for remote execution (because IPC.Commands.Execute does not support it).
-                // Hence it is always true for a remote ExecuteStep. If it's forced to run locally, we should respect this behavior.
-                WaitForCompletion = Environment == StepEnvironment.Remote || WaitForCompletion,
+                WaitForCompletion = WaitForCompletion,
                 TimeoutSecs = TimeoutSecs
             };
         }

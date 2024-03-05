@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using Xunit;
@@ -7,6 +8,25 @@ namespace VSRAD.DebugServerTests.Handlers
 {
     public class ExecuteHandlerTest
     {
+        [Fact]
+        public async void SetsEnvironmentVariablesTestAsync()
+        {
+            var pyTest = "import os;" +
+                "print(os.environ['TEST_VAR_1']);" +
+                "print(os.environ['TEST_VAR_2']);";
+
+            var response = await Helper.DispatchCommandAsync<Execute, ExecutionCompleted>(
+                new Execute
+                {
+                    Executable = "python.exe",
+                    Arguments = $"-c \"{pyTest}\"",
+                    EnvironmentVariables = new Dictionary<string, string>() { { "TEST_VAR_1", "12345" }, { "TEST_VAR_2", "env test"} }
+                });
+            Assert.Equal(ExecutionStatus.Completed, response.Status);
+            Assert.Equal(0, response.ExitCode);
+            Assert.Equal("12345\r\nenv test\r\n", response.Stdout);
+        }
+
         [Fact]
         public async void RunsExternalCommandsAsync()
         {

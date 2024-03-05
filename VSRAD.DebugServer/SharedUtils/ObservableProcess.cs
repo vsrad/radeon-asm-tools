@@ -32,6 +32,10 @@ namespace VSRAD.DebugServer.SharedUtils
                 },
                 EnableRaisingEvents = true
             };
+            foreach (var env in command.EnvironmentVariables)
+            {
+                _process.StartInfo.EnvironmentVariables.Add(env.Key, env.Value);
+            }
             if (command.RunAsAdministrator)
             {
                 _process.StartInfo.UseShellExecute = true;

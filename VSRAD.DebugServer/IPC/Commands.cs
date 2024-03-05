@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 using VSRAD.DebugServer.SharedUtils;
 
@@ -87,14 +89,13 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string Arguments { get; set; } = "";
 
-        public bool RunAsAdministrator { get; set; }
+        public IReadOnlyDictionary<string, string> EnvironmentVariables { get; set; } = new Dictionary<string, string>();
 
-        // Note that WaitForCompletion cannot be set to false for remote execution --
-        // it is simply not sent so we don't have to change the serialization format,
-        // which will break backward compatibility
+        public bool RunAsAdministrator { get; set; } = false;
+
         public bool WaitForCompletion { get; set; } = true;
 
-        public int ExecutionTimeoutSecs { get; set; }
+        public int ExecutionTimeoutSecs { get; set; } = 0;
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -102,6 +103,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             $"WorkingDirectory = {WorkingDirectory}",
             $"Executable = {Executable}",
             $"Arguments = {Arguments}",
+            $"EnvironmentVariables = {{ {string.Join(", ", EnvironmentVariables.Select(kv => kv.Key + " = " + kv.Value))} }}",
             $"RunAsAdministrator = {RunAsAdministrator}",
             $"WaitForCompletion = {WaitForCompletion}",
             $"ExecutionTimeoutSecs = {ExecutionTimeoutSecs}"
@@ -112,7 +114,9 @@ namespace VSRAD.DebugServer.IPC.Commands
             WorkingDirectory = reader.ReadString(),
             Executable = reader.ReadString(),
             Arguments = reader.ReadString(),
+            EnvironmentVariables = reader.ReadLengthPrefixedStringDict(),
             RunAsAdministrator = reader.ReadBoolean(),
+            WaitForCompletion = reader.ReadBoolean(),
             ExecutionTimeoutSecs = reader.ReadInt32()
         };
 
@@ -121,7 +125,9 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(WorkingDirectory);
             writer.Write(Executable);
             writer.Write(Arguments);
+            writer.WriteLengthPrefixedDict(EnvironmentVariables);
             writer.Write(RunAsAdministrator);
+            writer.Write(WaitForCompletion);
             writer.Write(ExecutionTimeoutSecs);
         }
     }
