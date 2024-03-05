@@ -44,6 +44,11 @@ namespace VSRAD.DebugServer.Logging
                 .CreateLogger();
         }
 
+        public GlobalLogger(ILogger logger)
+        {
+            _logger = logger;
+        }
+
         public void SetLogLevel(bool verbose) =>
             _loggingLevel.MinimumLevel = verbose ? LogEventLevel.Verbose : LogEventLevel.Information;
 

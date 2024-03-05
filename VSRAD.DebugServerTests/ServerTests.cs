@@ -1,6 +1,10 @@
-﻿using System.IO;
+﻿using Moq;
+using Serilog;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Responses;
 using Xunit;
@@ -9,8 +13,20 @@ namespace VSRAD.DebugServerTests
 {
     public class ServerTests
     {
+        private static async Task ExchangeVersionsAsync(Stream client)
+        {
+            var command = new DebugServer.IPC.Commands.ExchangeVersionsCommand
+            {
+                ClientVersion = Server.MinimumClientVersion,
+                ClientPlatform = System.Runtime.InteropServices.OSPlatform.Windows,
+            };
+            await client.WriteSerializedMessageAsync(command);
+            var (response, _) = await client.ReadSerializedResponseAsync<ExchangeVersionsResponse>();
+            Assert.Equal(ExchangeVersionsStatus.Successful, response.Status);
+        }
+
         [Fact]
-        public async void ExecuteTestAsync()
+        public async Task ExecuteTestAsync()
         {
             var server = new Server(new IPEndPoint(IPAddress.Loopback, 13333), new DebugServer.Logging.GlobalLogger());
             _ = server.LoopAsync();
@@ -29,6 +45,8 @@ namespace VSRAD.DebugServerTests
             };
             using (var client = new TcpClient("127.0.0.1", 13333).GetStream())
             {
+                await ExchangeVersionsAsync(client);
+
                 await client.WriteSerializedMessageAsync(command);
                 var (response, _) = await client.ReadSerializedResponseAsync<ExecutionCompleted>();
                 Assert.Equal(ExecutionStatus.Completed, response.Status);
@@ -38,7 +56,7 @@ namespace VSRAD.DebugServerTests
         }
 
         [Fact]
-        public async void SequentialCommandProcessingTest()
+        public async Task SequentialCommandProcessingTest()
         {
             var server = new Server(new IPEndPoint(IPAddress.Loopback, 13337), new DebugServer.Logging.GlobalLogger());
             _ = server.LoopAsync();
@@ -49,6 +67,9 @@ namespace VSRAD.DebugServerTests
             using var stream1 = client1.GetStream();
             using var stream2 = client2.GetStream();
             using var stream3 = client3.GetStream();
+            await ExchangeVersionsAsync(stream1);
+            await ExchangeVersionsAsync(stream2);
+            await ExchangeVersionsAsync(stream3);
 
             await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute
             {
@@ -87,6 +108,27 @@ namespace VSRAD.DebugServerTests
             await stream3.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute()).ConfigureAwait(false);
             var (response, _) = await stream3.ReadSerializedResponseAsync<ExecutionCompleted>().ConfigureAwait(false);
             Assert.Equal(ExecutionStatus.CouldNotLaunch, response.Status);
+        }
+
+        [Fact]
+        public async Task ConnectionWithoutVersionExchangeRejectedTestAsync()
+        {
+            var logSink = new List<string>();
+            var loggerMock = new Mock<ILogger>();
+            loggerMock.Setup(l => l.ForContext(It.IsAny<string>(), It.IsAny<string>(), false)).Returns(loggerMock.Object);
+            loggerMock.Setup(l => l.Warning(It.IsAny<string>())).Callback((string m) => logSink.Add(m));
+
+            var server = new Server(new IPEndPoint(IPAddress.Loopback, 13331), new DebugServer.Logging.GlobalLogger(loggerMock.Object));
+            _ = server.LoopAsync();
+
+            using (var client = new TcpClient("127.0.0.1", 13331).GetStream())
+            {
+                await client.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.ListEnvironmentVariables());
+                await Assert.ThrowsAnyAsync<IOException>(
+                    async () => _ = await client.ReadSerializedResponseAsync<EnvironmentVariablesListed>());
+                Assert.Single(logSink);
+                Assert.StartsWith("Client did not initiate the connection with version exchange", logSink[0]);
+            }
         }
     }
 }

@@ -24,6 +24,7 @@ namespace VSRAD.DebugServer.Logging
             _logger.Information($"Command received ({bytesReceived} bytes): {c}");
             _timer.Restart();
         }
+
         public void ResponseSent(IPC.Responses.IResponse r, int bytesSent) =>
             _logger.Information($"Sent response ({bytesSent} bytes): {r}");
 
@@ -33,8 +34,11 @@ namespace VSRAD.DebugServer.Logging
             _logger.Verbose($"Command processed in {_timer.ElapsedMilliseconds}ms");
         }
 
+        public void ClientMissingVersionExchange(Version minimumClientVersion) =>
+            _logger.Warning($"Client did not initiate the connection with version exchange. Connection rejected. Update the client to version {minimumClientVersion} or above");
+
         public void FatalClientException(Exception e) =>
-            _logger.Error(e, "An exception has occurred while processing the command. Connection has been terminated.");
+            _logger.Error(e, "An exception occurred while processing the command. Connection terminated");
 
         public void CliendDisconnected() =>
             _logger.Information("Client disconnected");
