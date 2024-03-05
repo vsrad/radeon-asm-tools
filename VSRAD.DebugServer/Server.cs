@@ -73,11 +73,8 @@ namespace VSRAD.DebugServer
                         lockAcquired = true;
 
                         var response = await Dispatcher.DispatchAsync(command, clientLog).ConfigureAwait(false);
-                        if (response != null) // commands like Deploy do not return a response
-                        {
-                            var bytesSent = await tcpClient.GetStream().WriteSerializedMessageAsync(response).ConfigureAwait(false);
-                            clientLog.ResponseSent(response, bytesSent);
-                        }
+                        var bytesSent = await tcpClient.GetStream().WriteSerializedMessageAsync(response).ConfigureAwait(false);
+                        clientLog.ResponseSent(response, bytesSent);
 
                         clientLog.CommandProcessed();
                     }

@@ -90,20 +90,6 @@ namespace VSRAD.DebugServerTests
             var (response2, _) = await stream1.ReadSerializedResponseAsync<MetadataFetched>().ConfigureAwait(false);
             Assert.Equal(FetchStatus.FileNotFound, response2.Status);
 
-            // This command contains invalid archive data and should trigger an exception;
-            // however, the global execution lock should be released so subsequent commands can be processed.
-            await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Deploy
-            {
-                Destination = "the wired",
-                Data = new byte[] { 0xBE, 0xEF } // invalid archive data should trigger an exception
-            }).ConfigureAwait(false);
-            await stream2.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.FetchResultRange
-            {
-                FilePath = new[] { @"H:\what" }
-            }).ConfigureAwait(false);
-            var (responseAfterException, _) = await stream2.ReadSerializedResponseAsync<ResultRangeFetched>();
-            Assert.Equal(FetchStatus.FileNotFound, responseAfterException.Status);
-
             await stream2.WriteAsync(new byte[] { 0, 0, 0, 0 }); // invalid command should not affect other clients
             await stream3.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute()).ConfigureAwait(false);
             var (response, _) = await stream3.ReadSerializedResponseAsync<ExecutionCompleted>().ConfigureAwait(false);

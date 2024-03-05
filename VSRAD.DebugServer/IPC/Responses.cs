@@ -18,7 +18,7 @@ namespace VSRAD.DebugServer.IPC.Responses
         PutDirectory = 5,
         ListFiles = 6,
         GetFiles = 7,
-        ExchangeVersions = 9,
+        ExchangeVersions = 8,
 
         CompressedResponse = 0xFF
     }

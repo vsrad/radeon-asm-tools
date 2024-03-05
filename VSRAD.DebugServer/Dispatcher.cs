@@ -19,7 +19,6 @@ namespace VSRAD.DebugServer
             ListFilesCommand lf => new ListFilesHandler(lf).RunAsync(),
             GetFilesCommand gf => new GetFilesHandler(gf).RunAsync(),
             ExchangeVersionsCommand ev => new ExchangeVersionsHandler(ev).RunAsync(),
-            Deploy d => new DeployHandler(d, clientLog).RunAsync(),
             ListEnvironmentVariables lev => new ListEnvironmentVariablesHandler(lev).RunAsync(),
             _ => throw new ArgumentException($"Unknown command type {command.GetType()}"),
         };

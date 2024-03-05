@@ -14,13 +14,12 @@ namespace VSRAD.DebugServer.IPC.Commands
         Execute = 0,
         FetchMetadata = 1,
         FetchResultRange = 2,
-        Deploy = 3,
-        ListEnvironmentVariables = 4,
-        PutFile = 5,
-        PutDirectory = 6,
-        ListFiles = 7,
-        GetFiles = 8,
-        ExchangeVersions = 9,
+        ListEnvironmentVariables = 3,
+        PutFile = 4,
+        PutDirectory = 5,
+        ListFiles = 6,
+        GetFiles = 7,
+        ExchangeVersions = 8,
 
         CompressedCommand = 0xFF
     }
@@ -44,7 +43,6 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.Execute: return Execute.Deserialize(reader);
                 case CommandType.FetchMetadata: return FetchMetadata.Deserialize(reader);
                 case CommandType.FetchResultRange: return FetchResultRange.Deserialize(reader);
-                case CommandType.Deploy: return Deploy.Deserialize(reader);
                 case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
                 case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
@@ -65,7 +63,6 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case Execute _: type = CommandType.Execute; break;
                 case FetchMetadata _: type = CommandType.FetchMetadata; break;
                 case FetchResultRange _: type = CommandType.FetchResultRange; break;
-                case Deploy _: type = CommandType.Deploy; break;
                 case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
                 case PutFileCommand _: type = CommandType.PutFile; break;
                 case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
@@ -376,31 +373,6 @@ namespace VSRAD.DebugServer.IPC.Commands
 
                 writer.WriteLengthPrefixedBlob(outputStream.ToArray());
             }
-        }
-    }
-
-    public sealed class Deploy : ICommand
-    {
-        public byte[] Data { get; set; }
-
-        public string Destination { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[] {
-            "Deploy",
-            $"Data = <{Data.Length} bytes>",
-            $"Destination Folder = {Destination}"
-        });
-
-        public static Deploy Deserialize(IPCReader reader) => new Deploy
-        {
-            Data = reader.ReadLengthPrefixedBlob(),
-            Destination = reader.ReadString()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.WriteLengthPrefixedBlob(Data);
-            writer.Write(Destination);
         }
     }
 
