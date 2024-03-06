@@ -107,11 +107,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private MacroEvaluatorTransientValues GetMacroTransients()
         {
             return new MacroEvaluatorTransientValues(0,
-                sourcePath: "<active editor tab full path>",
-                debugPath: "<debug startup path>",
-                targetProcessor: "<target processor>",
-                sourceDir: "<active editor tab dir name>",
-                sourceFile: "<active editor tab file name>");
+                sourcePath: "(ActiveEditorTabFullPath)",
+                debugPath: "(DebugStartupPath)",
+                targetProcessor: "(TargetProcessor)",
+                sourceDir: "(ActiveEditorTabDirectory)",
+                sourceFile: "(ActiveEditorTabFileName)");
         }
     }
 }
