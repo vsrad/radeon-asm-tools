@@ -117,9 +117,10 @@ namespace VSRAD.Package.ProjectSystem
                         _runningActionName = null;
                         _runningActionTokenSource = null;
 
-                        var error = await _actionLogger.LogActionRunAsync(actionName, actionRun);
                         if (actionReadsDebugData)
                             _debuggerIntegration.NotifyDebugActionExecuted(actionRun, debugBreakTarget);
+
+                        var error = await _actionLogger.LogActionRunAsync(actionName, actionRun);
                         if (error != default)
                             Errors.Show(error);
                     }

@@ -21,6 +21,6 @@ namespace VSRAD.Package.ToolWindows
         }
 
         protected override void OnWindowFocusChanged(bool hasFocus) =>
-            _visualizerControl.WindowFocusChanged(hasFocus);
+            _visualizerControl?.WindowFocusChanged(hasFocus);
     }
 }
