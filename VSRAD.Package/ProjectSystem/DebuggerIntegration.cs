@@ -157,8 +157,10 @@ namespace VSRAD.Package.ProjectSystem
             ExecutionCompleted?.Invoke(this, args);
             // VS debugger (via ExecutionCompleted) will navigate to the break location when using F5, but for Rerun Debug and Reverse Debug we need to do it ourselves
             _projectSourceManager.OpenDocument(args.BreakLocations[0].CallStack[0].SourcePath, args.BreakLocations[0].CallStack[0].SourceLine);
-            // Notify Visualizer after navigating to the break line so the Visualizer window can become active
+            // Update Visualizer after navigating to the break line
             BreakEntered?.Invoke(this, breakResult);
+            // Make the Visualizer window active
+            VSPackage.VisualizerToolWindow?.BringToFront();
             // Finally, override VS debugger break line markers
             _breakLineTagger.OnExecutionCompleted(_projectSourceManager, args);
         }

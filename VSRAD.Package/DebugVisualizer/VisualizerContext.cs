@@ -97,7 +97,6 @@ namespace VSRAD.Package.DebugVisualizer
                 Status = FormatErrorStatusString(error, LastRunTime);
             }
             WavemapSelection = null;
-            VSPackage.VisualizerToolWindow?.BringToFront();
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
