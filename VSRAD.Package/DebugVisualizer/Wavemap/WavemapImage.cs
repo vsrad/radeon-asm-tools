@@ -17,7 +17,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public static readonly System.Drawing.Color Violet = System.Drawing.Color.FromArgb(112, 89, 145);
         public static readonly System.Drawing.Color Pink = System.Drawing.Color.FromArgb(208, 147, 146);
         public static readonly System.Drawing.Color[] BreakpointColors = new[] { Blue, Red, Green, Violet, Pink };
-        public static readonly System.Drawing.Color NoBreakpointColor = System.Drawing.Color.FromArgb(150, 150, 150);
+        public static readonly System.Drawing.Color NoBreakpointColor = System.Drawing.Color.Gray;
 
         public event EventHandler<VisualizerNavigationEventArgs> NavigationRequested;
 
@@ -48,6 +48,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _imageControl.MouseMove += ShowWaveInfo;
             _imageControl.MouseLeftButtonUp += NavigateToWave;
             _imageControl.MouseRightButtonUp += ShowWaveMenu;
+            _imageControl.MouseLeave += HideWaveInfo;
 
             _context = context;
             _context.PropertyChanged += VisualizerStateChanged;
@@ -89,6 +90,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 var breakpoint = cell.Wave.BreakpointIndex != null ? _context.BreakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex] : null;
                 NavigationRequested(this, new VisualizerNavigationEventArgs { GroupIndex = cell.GroupIndex, WaveIndex = cell.WaveIndex, Breakpoint = breakpoint });
             }
+        }
+
+        private void HideWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            _context.WavemapSelection = null;
         }
 
         private void ShowWaveMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)
