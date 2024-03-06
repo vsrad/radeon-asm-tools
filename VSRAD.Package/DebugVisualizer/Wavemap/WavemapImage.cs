@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
@@ -20,14 +19,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public static readonly System.Drawing.Color[] BreakpointColors = new[] { Blue, Red, Green, Violet, Pink };
         public static readonly System.Drawing.Color NoBreakpointColor = System.Drawing.Color.FromArgb(150, 150, 150);
 
-        public sealed class NagivationEventArgs : EventArgs
-        {
-            public uint? GroupIndex { get; set; }
-            public uint? WaveIndex { get; set; }
-            public BreakpointInfo Breakpoint { get; set; }
-        }
-
-        public event EventHandler<NagivationEventArgs> NavigationRequested;
+        public event EventHandler<VisualizerNavigationEventArgs> NavigationRequested;
 
         public event EventHandler Updated;
 
@@ -95,7 +87,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             if (GetCellAtImagePos(e.GetPosition(_imageControl)) is WavemapCell cell)
             {
                 var breakpoint = cell.Wave.BreakpointIndex != null ? _context.BreakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex] : null;
-                NavigationRequested(this, new NagivationEventArgs { GroupIndex = cell.GroupIndex, WaveIndex = cell.WaveIndex, Breakpoint = breakpoint });
+                NavigationRequested(this, new VisualizerNavigationEventArgs { GroupIndex = cell.GroupIndex, WaveIndex = cell.WaveIndex, Breakpoint = breakpoint });
             }
         }
 
@@ -105,16 +97,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             {
                 var menu = new ContextMenu { PlacementTarget = _imageControl };
                 var goToGroup = new MenuItem { Header = $"Go to Group #{cell.GroupIndex}" };
-                goToGroup.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = cell.GroupIndex });
+                goToGroup.Click += (s, _) => NavigationRequested(this, new VisualizerNavigationEventArgs { GroupIndex = cell.GroupIndex });
                 menu.Items.Add(goToGroup);
                 var goToWave = new MenuItem { Header = $"Go to Wave #{cell.WaveIndex}" };
-                goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { WaveIndex = cell.WaveIndex });
+                goToWave.Click += (s, _) => NavigationRequested(this, new VisualizerNavigationEventArgs { WaveIndex = cell.WaveIndex });
                 menu.Items.Add(goToWave);
                 if (cell.Wave.BreakpointIndex != null)
                 {
                     var breakpoint = _context.BreakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex];
                     var goToBreakLine = new MenuItem { Header = new TextBlock { Text = $"Go to Breakpoint ({breakpoint.Location})" } }; // use TextBlock because Location may contain underscores
-                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { Breakpoint = breakpoint });
+                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new VisualizerNavigationEventArgs { Breakpoint = breakpoint });
                     menu.Items.Add(goToBreakLine);
                 }
                 else

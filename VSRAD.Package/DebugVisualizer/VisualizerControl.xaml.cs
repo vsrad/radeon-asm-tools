@@ -22,11 +22,12 @@ namespace VSRAD.Package.DebugVisualizer
             _context.PropertyChanged += VisualizerStateChanged;
             _context.GroupFetched += GroupFetched;
             _context.GroupFetching += SetupDataFetch;
+            _context.NavigationRequested += HandleNavigation;
             DataContext = _context;
             InitializeComponent();
 
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
-            _wavemap.NavigationRequested += NavigateFromWavemap;
+            _wavemap.NavigationRequested += HandleNavigation;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerStateChanged;
@@ -54,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
-        private void NavigateFromWavemap(object sender, WavemapImage.NagivationEventArgs e)
+        private void HandleNavigation(object sender, VisualizerNavigationEventArgs e)
         {
             if (e.GroupIndex is uint groupIndex)
                 _context.GroupIndex.GoToGroup(groupIndex);

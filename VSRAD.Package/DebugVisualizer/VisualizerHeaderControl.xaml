@@ -238,7 +238,14 @@
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
             <Label Height="26">
-                <TextBlock Text="{Binding Status, Mode=OneWay}"/>
+                <TextBlock>
+                    <TextBlock.Inlines>
+                        <Run Text="{Binding Status, Mode=OneWay}"/>
+                        <Hyperlink Command="{Binding BreakpointInfoCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}">
+                            <Run Text="{Binding BreakpointInfo}" />
+                        </Hyperlink>
+                    </TextBlock.Inlines>
+                </TextBlock>
             </Label>
         </WrapPanel>
         <Grid>
