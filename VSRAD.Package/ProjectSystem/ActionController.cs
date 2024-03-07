@@ -185,7 +185,7 @@ namespace VSRAD.Package.ProjectSystem
 
                 var env = new ActionEnvironment(watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
-                var runResult = await runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
+                var runResult = await Task.Run(() => runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token)).ConfigureAwait(false);
                 return runResult;
             }
             finally
