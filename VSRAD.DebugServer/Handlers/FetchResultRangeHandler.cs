@@ -15,7 +15,7 @@ namespace VSRAD.DebugServer.Handlers
         public FetchResultRangeHandler(IPC.Commands.FetchResultRange command)
         {
             _command = command;
-            _filePath = Path.Combine(command.FilePath);
+            _filePath = command.FilePath;
         }
 
         public async Task<IResponse> RunAsync()

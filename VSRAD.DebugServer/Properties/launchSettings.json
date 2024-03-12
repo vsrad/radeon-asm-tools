@@ -2,7 +2,7 @@
   "profiles": {
     "VSRAD.DebugServer": {
       "commandName": "Project",
-      "commandLineArgs": "9339"
+      "commandLineArgs": "127.0.0.1:9339"
     }
   }
 }

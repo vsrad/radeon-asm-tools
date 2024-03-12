@@ -4,75 +4,58 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 
-namespace VSRAD.DebugServer
+namespace VSRAD.DebugServer.Logging
 {
     public class ClientLogger
     {
-        private readonly uint _clientId;
-        private readonly bool _verbose;
-        private readonly Stopwatch _timer;
+        private readonly ILogger _logger;
+        private readonly Stopwatch _timer = new Stopwatch();
 
-        public ClientLogger(uint clientId, bool verbose)
+        public ClientLogger(ILogger logger)
         {
-            _clientId = clientId;
-            _verbose = verbose;
-            _timer = new Stopwatch();
+            _logger = logger;
         }
 
         public void ConnectionEstablished(EndPoint clientEndpoint) =>
-            Print($"Connection with {clientEndpoint} has been established.");
+            _logger.Information($"Connection established with {clientEndpoint}");
 
         public void CommandReceived(IPC.Commands.ICommand c, int bytesReceived)
         {
-            Print($"Command received ({bytesReceived} bytes): {c}");
-            if (_verbose)
-                _timer.Restart();
+            _logger.Information($"Command received ({bytesReceived} bytes): {c}");
+            _timer.Restart();
         }
 
         public void ResponseSent(IPC.Responses.IResponse r, int bytesSent) =>
-            Print($"Sent response ({bytesSent} bytes): {r}");
-
-        public void FatalClientException(Exception e) =>
-            Print("An exception has occurred while processing the command. Connection has been terminated." + Environment.NewLine + e.ToString());
-
-        public void CliendDisconnected() =>
-            Print("client has been disconnected");
-
-        public void ExecutionStarted()
-        {
-            if (_verbose) Log.Information("===");
-        }
-
-        public void StdoutReceived(string output)
-        {
-            if (_verbose)
-                Log.Information($"#{_clientId} stdout> " + output);
-        }
-
-        public void StderrReceived(string output)
-        {
-            if (_verbose)
-                Log.Information($"#{_clientId} stderr> " + output);
-        }
-
-        public void DeployItemsReceived(IEnumerable<string> outputPaths)
-        {
-            if (!_verbose) return;
-
-            Log.Information("Deploy Items:");
-            foreach (var path in outputPaths)
-                Log.Information("-- " + path);
-        }
+            _logger.Information($"Sent response ({bytesSent} bytes): {r}");
 
         public void CommandProcessed()
         {
-            if (!_verbose) return;
-
             _timer.Stop();
-            Log.Information($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
+            _logger.Verbose($"Command processed in {_timer.ElapsedMilliseconds}ms");
         }
 
-        private void Print(string message) =>
-            Log.Information("===" + Environment.NewLine + $"[Client #{_clientId}] {message}");
+        public void ClientMissingVersionExchange(Version minimumClientVersion) =>
+            _logger.Warning($"Client did not initiate the connection with version exchange. Connection rejected. Update the client to version {minimumClientVersion} or above");
+
+        public void FatalClientException(Exception e) =>
+            _logger.Error(e, "An exception occurred while processing the command. Connection terminated");
+
+        public void CliendDisconnected() =>
+            _logger.Information("Client disconnected");
+
+        public void ExecutionStarted() { }
+
+        public void StdoutReceived(string output) =>
+            _logger.Verbose($"stdout> " + output);
+
+        public void StderrReceived(string output) =>
+            _logger.Verbose($"stderr> " + output);
+
+        public void DeployItemsReceived(IEnumerable<string> outputPaths)
+        {
+            _logger.Verbose("Deploy Items:");
+            foreach (var path in outputPaths)
+                _logger.Verbose("-- " + path);
+        }
     }
 }

@@ -3,8 +3,8 @@ set config=%1
 cd %~dp0
 :: Publish DebugServer
 cd VSRAD.DebugServer
-dotnet publish -r win-x64 -c %config% --self-contained false
-dotnet publish -r linux-x64 -c %config% --self-contained false
+dotnet publish -r win-x64 -c %config% --self-contained=false /p:PublishSingleFile=true /p:IncludeSymbolsInSingleFile=true
+dotnet publish -r linux-x64 -c %config% --self-contained=false /p:PublishSingleFile=true /p:IncludeSymbolsInSingleFile=true
 cd ..
 :: DebugServer
 mkdir %config%

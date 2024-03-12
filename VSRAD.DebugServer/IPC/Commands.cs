@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 using VSRAD.DebugServer.SharedUtils;
 
@@ -12,13 +14,12 @@ namespace VSRAD.DebugServer.IPC.Commands
         Execute = 0,
         FetchMetadata = 1,
         FetchResultRange = 2,
-        Deploy = 3,
-        ListEnvironmentVariables = 4,
-        PutFile = 5,
-        PutDirectory = 6,
-        ListFiles = 7,
-        GetFiles = 8,
-        ExchangeVersions = 9,
+        ListEnvironmentVariables = 3,
+        PutFile = 4,
+        PutDirectory = 5,
+        ListFiles = 6,
+        GetFiles = 7,
+        ExchangeVersions = 8,
 
         CompressedCommand = 0xFF
     }
@@ -42,7 +43,6 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.Execute: return Execute.Deserialize(reader);
                 case CommandType.FetchMetadata: return FetchMetadata.Deserialize(reader);
                 case CommandType.FetchResultRange: return FetchResultRange.Deserialize(reader);
-                case CommandType.Deploy: return Deploy.Deserialize(reader);
                 case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
                 case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
@@ -63,7 +63,6 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case Execute _: type = CommandType.Execute; break;
                 case FetchMetadata _: type = CommandType.FetchMetadata; break;
                 case FetchResultRange _: type = CommandType.FetchResultRange; break;
-                case Deploy _: type = CommandType.Deploy; break;
                 case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
                 case PutFileCommand _: type = CommandType.PutFile; break;
                 case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
@@ -87,14 +86,13 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string Arguments { get; set; } = "";
 
-        public bool RunAsAdministrator { get; set; }
+        public IReadOnlyDictionary<string, string> EnvironmentVariables { get; set; } = new Dictionary<string, string>();
 
-        // Note that WaitForCompletion cannot be set to false for remote execution --
-        // it is simply not sent so we don't have to change the serialization format,
-        // which will break backward compatibility
+        public bool RunAsAdministrator { get; set; } = false;
+
         public bool WaitForCompletion { get; set; } = true;
 
-        public int ExecutionTimeoutSecs { get; set; }
+        public int ExecutionTimeoutSecs { get; set; } = 0;
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -102,6 +100,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             $"WorkingDirectory = {WorkingDirectory}",
             $"Executable = {Executable}",
             $"Arguments = {Arguments}",
+            $"EnvironmentVariables = {{ {string.Join(", ", EnvironmentVariables.Select(kv => kv.Key + " = " + kv.Value))} }}",
             $"RunAsAdministrator = {RunAsAdministrator}",
             $"WaitForCompletion = {WaitForCompletion}",
             $"ExecutionTimeoutSecs = {ExecutionTimeoutSecs}"
@@ -112,7 +111,9 @@ namespace VSRAD.DebugServer.IPC.Commands
             WorkingDirectory = reader.ReadString(),
             Executable = reader.ReadString(),
             Arguments = reader.ReadString(),
+            EnvironmentVariables = reader.ReadLengthPrefixedStringDict(),
             RunAsAdministrator = reader.ReadBoolean(),
+            WaitForCompletion = reader.ReadBoolean(),
             ExecutionTimeoutSecs = reader.ReadInt32()
         };
 
@@ -121,52 +122,55 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(WorkingDirectory);
             writer.Write(Executable);
             writer.Write(Arguments);
+            writer.WriteLengthPrefixedDict(EnvironmentVariables);
             writer.Write(RunAsAdministrator);
+            writer.Write(WaitForCompletion);
             writer.Write(ExecutionTimeoutSecs);
         }
     }
 
     public sealed class FetchMetadata : ICommand
     {
-        public string[] FilePath { get; set; }
+        public string FilePath { get; set; } = "";
 
         public bool BinaryOutput { get; set; } = true;
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "FetchMetadata",
-            $"FilePath = {string.Join(", ", FilePath)}",
+            $"FilePath = {FilePath}",
             $"BinaryOutput = {BinaryOutput}"
         });
 
         public static FetchMetadata Deserialize(IPCReader reader) => new FetchMetadata
         {
-            FilePath = reader.ReadLengthPrefixedStringArray(),
+            FilePath = reader.ReadString(),
             BinaryOutput = reader.ReadBoolean()
         };
 
         public void Serialize(IPCWriter writer)
         {
-            writer.WriteLengthPrefixedArray(FilePath);
+            writer.Write(FilePath);
             writer.Write(BinaryOutput);
         }
     }
 
     public sealed class FetchResultRange : ICommand
     {
-        public string[] FilePath { get; set; }
+        public string FilePath { get; set; } = "";
 
         public bool BinaryOutput { get; set; } = true;
 
-        public int ByteOffset { get; set; }
+        public int ByteOffset { get; set; } = 0;
 
-        public int ByteCount { get; set; }
-        public int OutputOffset { get; set; }
+        public int ByteCount { get; set; } = 0;
+
+        public int OutputOffset { get; set; } = 0;
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "FetchResultRange",
-            $"FilePath = {string.Join(", ", FilePath)}",
+            $"FilePath = {FilePath}",
             $"BinaryOutput = {BinaryOutput}",
             $"ByteOffset = {ByteOffset}",
             $"ByteCount = {ByteCount}",
@@ -175,7 +179,7 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public static FetchResultRange Deserialize(IPCReader reader) => new FetchResultRange
         {
-            FilePath = reader.ReadLengthPrefixedStringArray(),
+            FilePath = reader.ReadString(),
             BinaryOutput = reader.ReadBoolean(),
             ByteOffset = reader.ReadInt32(),
             ByteCount = reader.ReadInt32(),
@@ -184,7 +188,7 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public void Serialize(IPCWriter writer)
         {
-            writer.WriteLengthPrefixedArray(FilePath);
+            writer.Write(FilePath);
             writer.Write(BinaryOutput);
             writer.Write(ByteOffset);
             writer.Write(ByteCount);
@@ -194,69 +198,64 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class PutFileCommand : ICommand
     {
-        public byte[] Data { get; set; }
+        public string FilePath { get; set; } = "";
 
-        public string Path { get; set; }
-
-        public string WorkDir { get; set; }
+        public byte[] Data { get; set; } = Array.Empty<byte>();
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "PutFileCommand",
+            $"FilePath = {FilePath}",
             $"Data = <{Data.Length} bytes>",
-            $"Path = {Path}",
-            $"WorkDir = {WorkDir}"
         });
 
         public static PutFileCommand Deserialize(IPCReader reader) => new PutFileCommand
         {
+            FilePath = reader.ReadString(),
             Data = reader.ReadLengthPrefixedBlob(),
-            Path = reader.ReadString(),
-            WorkDir = reader.ReadString()
         };
 
         public void Serialize(IPCWriter writer)
         {
+            writer.Write(FilePath);
             writer.WriteLengthPrefixedBlob(Data);
-            writer.Write(Path);
-            writer.Write(WorkDir);
         }
     }
 
     public sealed class PutDirectoryCommand : ICommand
     {
-        public PackedFile[] Files { get; set; } = Array.Empty<PackedFile>();
+        public string Path { get; set; } = "";
 
-        public string Path { get; set; }
+        public PackedFile[] Files { get; set; } = Array.Empty<PackedFile>();
 
         public bool PreserveTimestamps { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "PutDirectoryCommand",
-            $"Files = <{Files.Length} files>",
             $"Path = {Path}",
+            $"Files = <{Files.Length} files>",
             $"PreserveTimestamps = {PreserveTimestamps}"
         });
 
         public static PutDirectoryCommand Deserialize(IPCReader reader) => new PutDirectoryCommand
         {
-            Files = reader.ReadLengthPrefixedFileArray(),
             Path = reader.ReadString(),
+            Files = reader.ReadLengthPrefixedFileArray(),
             PreserveTimestamps = reader.ReadBoolean()
         };
 
         public void Serialize(IPCWriter writer)
         {
-            writer.WriteLengthPrefixedFileArray(Files);
             writer.Write(Path);
+            writer.WriteLengthPrefixedFileArray(Files);
             writer.Write(PreserveTimestamps);
         }
     }
 
     public sealed class ListFilesCommand : ICommand
     {
-        public string Path { get; set; }
+        public string Path { get; set; } = "";
 
         public bool IncludeSubdirectories { get; set; }
 
@@ -281,31 +280,31 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class GetFilesCommand : ICommand
     {
-        public bool UseCompression { get; set; }
-
         public string RootPath { get; set; }
 
         public string[] Paths { get; set; }
 
+        public bool UseCompression { get; set; }
+
         public override string ToString() => string.Join(Environment.NewLine, new[] {
             "GetFilesCommand",
-            $"UseCompression = {UseCompression}",
             $"RootPath = {RootPath}",
-            $"Paths = {string.Join(", ", Paths)}"
+            $"Paths = {string.Join(", ", Paths)}",
+            $"UseCompression = {UseCompression}"
         });
 
         public static GetFilesCommand Deserialize(IPCReader reader) => new GetFilesCommand
         {
-            UseCompression = reader.ReadBoolean(),
             RootPath = reader.ReadString(),
-            Paths = reader.ReadLengthPrefixedStringArray()
+            Paths = reader.ReadLengthPrefixedStringArray(),
+            UseCompression = reader.ReadBoolean()
         };
 
         public void Serialize(IPCWriter writer)
         {
-            writer.Write(UseCompression);
             writer.Write(RootPath);
             writer.WriteLengthPrefixedArray(Paths);
+            writer.Write(UseCompression);
         }
     }
 
@@ -370,31 +369,6 @@ namespace VSRAD.DebugServer.IPC.Commands
 
                 writer.WriteLengthPrefixedBlob(outputStream.ToArray());
             }
-        }
-    }
-
-    public sealed class Deploy : ICommand
-    {
-        public byte[] Data { get; set; }
-
-        public string Destination { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[] {
-            "Deploy",
-            $"Data = <{Data.Length} bytes>",
-            $"Destination Folder = {Destination}"
-        });
-
-        public static Deploy Deserialize(IPCReader reader) => new Deploy
-        {
-            Data = reader.ReadLengthPrefixedBlob(),
-            Destination = reader.ReadString()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.WriteLengthPrefixedBlob(Data);
-            writer.Write(Destination);
         }
     }
 

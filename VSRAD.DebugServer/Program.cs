@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -32,15 +31,16 @@ namespace VSRAD.DebugServer
                     Console.WriteLine($"Warning! Cannot set console mode. Error code={GetLastError()}");
             }
 
+            var globalLog = new Logging.GlobalLogger();
             if (CliOptions.TryParse(args, out var options))
             {
-                var server = new Server(IPAddress.Any, options.Port, options.Verbose);
-                Logging.GlobalLogger.ServerStarted(options);
+                globalLog.SetLogLevel(options.Verbose);
+                var server = new Server(options.LocalEndpoint, globalLog);
                 Task.Run(server.LoopAsync).Wait();
             }
             else
             {
-                Logging.GlobalLogger.Usage();
+                globalLog.Usage();
             }
         }
     }

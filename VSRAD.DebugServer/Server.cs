@@ -14,17 +14,27 @@ namespace VSRAD.DebugServer
 
         private readonly SemaphoreSlim _commandExecutionLock = new SemaphoreSlim(1, 1);
         private readonly TcpListener _listener;
-        private readonly bool _verboseLogging;
+        private readonly Logging.GlobalLogger _globalLog;
 
-        public Server(IPAddress ip, int port, bool verboseLogging = false)
+        public Server(IPEndPoint localEndpoint, Logging.GlobalLogger globalLog)
         {
-            _listener = new TcpListener(ip, port);
-            _verboseLogging = verboseLogging;
+            _listener = new TcpListener(localEndpoint);
+            _globalLog = globalLog;
         }
 
         public async Task LoopAsync()
         {
-            _listener.Start();
+            try
+            {
+                _listener.Start();
+                _globalLog.ServerStarted(_listener.LocalEndpoint);
+            }
+            catch (SocketException e)
+            {
+                _globalLog.ServerStartException(_listener.LocalEndpoint, e);
+                return;
+            }
+
             uint clientsCount = 0;
             while (true)
             {
@@ -39,8 +49,10 @@ namespace VSRAD.DebugServer
         {
             using (tcpClient)
             {
-                var clientLog = new ClientLogger(clientId, _verboseLogging);
+                var clientLog = _globalLog.CreateClientLogger(clientId);
                 clientLog.ConnectionEstablished(tcpClient.Client.RemoteEndPoint);
+
+                var exchangedVersions = false;
                 while (true)
                 {
                     var lockAcquired = false;
@@ -49,23 +61,36 @@ namespace VSRAD.DebugServer
                         var (command, bytesReceived) = await tcpClient.GetStream().ReadSerializedCommandAsync<ICommand>().ConfigureAwait(false);
                         clientLog.CommandReceived(command, bytesReceived);
 
+                        if (!exchangedVersions)
+                        {
+                            if (!(command is ExchangeVersionsCommand))
+                                throw new MissingVersionExchangeException();
+                            else
+                                exchangedVersions = true;
+                        }
+
                         await _commandExecutionLock.WaitAsync();
                         lockAcquired = true;
 
                         var response = await Dispatcher.DispatchAsync(command, clientLog).ConfigureAwait(false);
-                        if (response != null) // commands like Deploy do not return a response
-                        {
-                            var bytesSent = await tcpClient.GetStream().WriteSerializedMessageAsync(response).ConfigureAwait(false);
-                            clientLog.ResponseSent(response, bytesSent);
-                        }
+                        var bytesSent = await tcpClient.GetStream().WriteSerializedMessageAsync(response).ConfigureAwait(false);
+                        clientLog.ResponseSent(response, bytesSent);
+
                         clientLog.CommandProcessed();
+                    }
+                    catch (MissingVersionExchangeException)
+                    {
+                        clientLog.ClientMissingVersionExchange(MinimumClientVersion);
+                        break;
+                    }
+                    catch (Exception e) when (IsConnectionResetException(e))
+                    {
+                        clientLog.CliendDisconnected();
+                        break;
                     }
                     catch (Exception e)
                     {
-                        if (e is OperationCanceledException || e is EndOfStreamException || (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset))
-                            clientLog.CliendDisconnected();
-                        else
-                            clientLog.FatalClientException(e);
+                        clientLog.FatalClientException(e);
                         break;
                     }
                     finally
@@ -75,6 +100,18 @@ namespace VSRAD.DebugServer
                     }
                 }
             }
+        }
+
+        private static bool IsConnectionResetException(Exception e) => e switch
+        {
+            OperationCanceledException _ => true,
+            EndOfStreamException _ => true,
+            _ when e.InnerException is SocketException se => se.SocketErrorCode == SocketError.ConnectionReset || se.SocketErrorCode == SocketError.ConnectionAborted,
+            _ => false
+        };
+
+        private class MissingVersionExchangeException : IOException
+        {
         }
     }
 }

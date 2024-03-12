@@ -1,60 +1,74 @@
-﻿using System;
+﻿using Serilog;
+using Serilog.Core;
+using Serilog.Events;
+using System;
 using System.IO;
+using System.Net;
 using System.Reflection;
-using Serilog;
 
 namespace VSRAD.DebugServer.Logging
 {
-    static class GlobalLogger
+    public sealed class GlobalLogger
     {
-        private static readonly string _executableName;
-        private static readonly string _assemblyName;
-        private static readonly string _assemblyVersion;
+        private static readonly string _executableName = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
+        private static readonly string _assemblyName = Assembly.GetEntryAssembly().GetName().Name;
+        private static readonly string _assemblyVersion = Assembly.GetEntryAssembly().GetName().Version.ToString(3);
 
-        static GlobalLogger()
+        private static readonly string _logTemplateConsole = "[{Timestamp:HH:mm:ss} {Level:u3}]{Context} {Message:lj}{NewLine}{Exception}";
+        private static readonly string _logTemplateFile = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}]{Context} {Message:lj}{NewLine}{Exception}";
+
+        private readonly ILogger _logger;
+        private readonly LoggingLevelSwitch _loggingLevel = new LoggingLevelSwitch();
+
+        public GlobalLogger()
         {
-            var assembly = Assembly.GetEntryAssembly();
-            _executableName = Path.GetFileNameWithoutExtension(assembly.Location);
-            _assemblyName = assembly.GetName().Name;
-            _assemblyVersion = assembly.GetName().Version.ToString(3);
-
-            var cwd = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var cwd = Directory.GetCurrentDirectory();
             try
             {
-                var fs = File.Create(
-                    Path.Combine(
-                        cwd,
-                        Path.GetRandomFileName()
-                    ),
-                    1,
-                    FileOptions.DeleteOnClose);
-            } catch (Exception)
+                _ = File.Create(Path.Combine(cwd, Path.GetRandomFileName()), 1, FileOptions.DeleteOnClose);
+            }
+            catch (Exception)
             {
                 Console.WriteLine($"WARNING: {Environment.NewLine} " +
                     $"RAD Debug Server is unable to save log file, because directory({cwd}) is read - only.{Environment.NewLine}" +
                     $"This server instance will display logs only in this window, no log - file will be created.");
             }
 
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .WriteTo.Console()
+            _logger = new LoggerConfiguration()
+                .MinimumLevel.ControlledBy(_loggingLevel)
+                .WriteTo.Console(outputTemplate: _logTemplateConsole)
                 .WriteTo.File($"RadeonAsmDebugServer_{_assemblyVersion}_.txt",
+                    outputTemplate: _logTemplateFile,
                     rollingInterval: RollingInterval.Month,
                     rollOnFileSizeLimit: true)
                 .CreateLogger();
         }
 
-        public static void ServerStarted(CliOptions options)
+        public GlobalLogger(ILogger logger)
         {
-            var verboseInfo = options.Verbose ? "Verbose mode." : "Use -v option to enable verbose mode.";
-            Log.Information($"{_assemblyName} {_assemblyVersion} is running on port {options.Port}. {verboseInfo}");
+            _logger = logger;
         }
 
-        public static void Usage()
+        public void SetLogLevel(bool verbose) =>
+            _loggingLevel.MinimumLevel = verbose ? LogEventLevel.Verbose : LogEventLevel.Information;
+
+        public ClientLogger CreateClientLogger(uint clientId) =>
+            new ClientLogger(_logger.ForContext("Context", $"[Client #{clientId}]"));
+
+        public void ServerStartException(EndPoint localEndpoint, Exception e) =>
+            _logger.Error(e, $"Failed to start the server on endpoint {localEndpoint}");
+
+        public void ServerStarted(EndPoint localEndpoint)
         {
-            Log.Information($"Usage: {_executableName} [port] [-v|--verbose]");
-            Log.Information("    port          (Default: 9339) Run the server on the specified TCP port");
-            Log.Information("    -v, --verbose Print stdout and stderr of executing commands");
+            var verboseInfo = _loggingLevel.MinimumLevel == LogEventLevel.Verbose ? "Verbose mode." : "Use -v option to enable verbose mode.";
+            _logger.Information($"{_assemblyName} {_assemblyVersion} is listening on {localEndpoint}. {verboseInfo}");
+        }
+
+        public void Usage()
+        {
+            _logger.Information($"Usage: {_executableName} [endpoint] [-v|--verbose]");
+            _logger.Information("    endpoint      (Default: 0.0.0.0:9339) Listen on the specified TCP endpoint");
+            _logger.Information("    -v, --verbose Print stdout and stderr of executing commands");
         }
     }
 }

@@ -17,11 +17,10 @@ namespace VSRAD.DebugServer.Handlers
 
         public async Task<IResponse> RunAsync()
         {
-            var fullPath = Path.Combine(_command.WorkDir, _command.Path);
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-                await File.WriteAllBytesAsync(fullPath, _command.Data);
+                Directory.CreateDirectory(Path.GetDirectoryName(_command.FilePath));
+                await File.WriteAllBytesAsync(_command.FilePath, _command.Data);
                 return new PutFileResponse { Status = PutFileStatus.Successful };
             }
             catch (UnauthorizedAccessException)

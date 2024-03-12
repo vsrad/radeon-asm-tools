@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -122,7 +123,12 @@ namespace VSRAD.Package.ProjectSystem
 
                         var error = await _actionLogger.LogActionRunAsync(actionName, actionRun);
                         if (error != default)
-                            Errors.Show(error);
+                        {
+#pragma warning disable VSTHRD001 // Using BeginInvoke to show the error popup after the Error List window is refreshed
+                            _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+                                (Action)(() => Errors.Show(error)), System.Windows.Threading.DispatcherPriority.ContextIdle);
+#pragma warning restore VSTHRD001
+                        }
                     }
                 }
                 finally
@@ -185,7 +191,7 @@ namespace VSRAD.Package.ProjectSystem
 
                 var env = new ActionEnvironment(watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
-                var runResult = await runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
+                var runResult = await Task.Run(() => runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token)).ConfigureAwait(false);
                 return runResult;
             }
             finally
