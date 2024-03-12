@@ -9,8 +9,8 @@ namespace VSRAD.Syntax.Options.Instructions
     public delegate void InstructionsUpdateDelegate(IInstructionListManager sender, AsmType asmType);
     public interface IInstructionListManager
     {
-        IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType);
-        IEnumerable<Instruction> GetInstructions(AsmType asmType);
+        IInstructionSet GetSelectedInstructionSet(AsmType asmType);
+        IInstructionSet GetInstructionSetsUnion(AsmType asmType);
         event InstructionsUpdateDelegate InstructionsUpdated;
     }
 
@@ -29,8 +29,8 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         private readonly List<IInstructionSet> _radAsm1InstructionSets;
         private readonly List<IInstructionSet> _radAsm2InstructionSets;
-        private readonly List<Instruction> _radAsm1Instructions;
-        private readonly List<Instruction> _radAsm2Instructions;
+        private IInstructionSet _radAsm1InstructionsSetsUnion;
+        private IInstructionSet _radAsm2InstructionsSetsUnion;
 
         private AsmType activeDocumentAsm;
         private IInstructionSet radAsm1SelectedSet;
@@ -48,29 +48,27 @@ namespace VSRAD.Syntax.Options.Instructions
 
             _radAsm1InstructionSets = new List<IInstructionSet>();
             _radAsm2InstructionSets = new List<IInstructionSet>();
-            _radAsm1Instructions = new List<Instruction>();
-            _radAsm2Instructions = new List<Instruction>();
+            _radAsm1InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm, Enumerable.Empty<InstructionSet>());
+            _radAsm2InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm2, Enumerable.Empty<InstructionSet>());
             activeDocumentAsm = AsmType.Unknown;
         }
 
-        private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructions)
+        private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructionSets)
         {
             _radAsm1InstructionSets.Clear();
             _radAsm2InstructionSets.Clear();
-            _radAsm1Instructions.Clear();
-            _radAsm2Instructions.Clear();
 
-            foreach (var typeGroup in instructions.GroupBy(s => s.Type))
+            foreach (var instructionSet in instructionSets)
             {
-                switch (typeGroup.Key)
+                switch (instructionSet.Type)
                 {
-                    case InstructionType.RadAsm1: _radAsm1InstructionSets.AddRange(typeGroup.AsEnumerable()); break;
-                    case InstructionType.RadAsm2: _radAsm2InstructionSets.AddRange(typeGroup.AsEnumerable()); break;
+                    case AsmType.RadAsm: _radAsm1InstructionSets.Add(instructionSet); break;
+                    case AsmType.RadAsm2: _radAsm2InstructionSets.Add(instructionSet); break;
                 }
             }
 
-            _radAsm1Instructions.AddRange(_radAsm1InstructionSets.SelectMany(s => s.Select(i => i)));
-            _radAsm2Instructions.AddRange(_radAsm2InstructionSets.SelectMany(s => s.Select(i => i)));
+            _radAsm1InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm, _radAsm1InstructionSets);
+            _radAsm2InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm2, _radAsm2InstructionSets);
 
             CustomThreadHelper.RunOnMainThread(() =>
             {
@@ -83,23 +81,23 @@ namespace VSRAD.Syntax.Options.Instructions
             });
         }
 
-        public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
+        public IInstructionSet GetSelectedInstructionSet(AsmType asmType)
         {
             switch (asmType)
             {
-                case AsmType.RadAsm: return radAsm1SelectedSet ?? (IEnumerable<Instruction>)_radAsm1Instructions;
-                case AsmType.RadAsm2: return radAsm2SelectedSet ?? (IEnumerable<Instruction>)_radAsm2Instructions;
-                default: return Enumerable.Empty<Instruction>();
+                case AsmType.RadAsm: return radAsm1SelectedSet ?? _radAsm1InstructionsSetsUnion;
+                case AsmType.RadAsm2: return radAsm2SelectedSet ?? _radAsm2InstructionsSetsUnion;
+                default: return new InstructionSet(default, Enumerable.Empty<IInstructionSet>());
             }
         }
 
-        public IEnumerable<Instruction> GetInstructions(AsmType asmType)
+        public IInstructionSet GetInstructionSetsUnion(AsmType asmType)
         {
             switch (asmType)
             {
-                case AsmType.RadAsm: return _radAsm1Instructions;
-                case AsmType.RadAsm2: return _radAsm2Instructions;
-                default: return Enumerable.Empty<Instruction>();
+                case AsmType.RadAsm: return _radAsm1InstructionsSetsUnion;
+                case AsmType.RadAsm2: return _radAsm2InstructionsSetsUnion;
+                default: return new InstructionSet(default, Enumerable.Empty<IInstructionSet>());
             }
         }
 

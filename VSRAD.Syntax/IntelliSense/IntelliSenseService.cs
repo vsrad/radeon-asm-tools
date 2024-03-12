@@ -56,29 +56,28 @@ namespace VSRAD.Syntax.IntelliSense
             if (symbol is DefinitionToken definition)
             {
                 var asmType = symbol.Snapshot.GetAsmType();
-                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { new NavigationToken(document, definition) }, null);
+                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { new NavigationToken(document, definition) }, null, null);
             }
             else if (symbol is ReferenceToken reference)
             {
                 var asmType = symbol.Snapshot.GetAsmType();
                 var definitionDocument = _documentFactory.GetOrCreateDocument(reference.Definition.Snapshot.TextBuffer);
-                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { new NavigationToken(definitionDocument, reference.Definition) }, null);
+                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { new NavigationToken(definitionDocument, reference.Definition) }, null, null);
             }
             else if (symbol.Type == RadAsmTokenType.BuiltinFunction)
             {
                 var asmType = symbol.Snapshot.GetAsmType();
                 var builtinText = symbol.GetText().TrimPrefix("#");
                 if (_builtinInfoProvider.TryGetBuilinInfo(asmType, builtinText, out var builtinInfo))
-                    return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, Array.Empty<NavigationToken>(), builtinInfo);
+                    return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, Array.Empty<NavigationToken>(), null, builtinInfo);
             }
             else if (symbol.Type == RadAsmTokenType.Instruction)
             {
                 var asmType = symbol.Snapshot.GetAsmType();
-                var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
+                var instructions = _instructionListManager.GetSelectedInstructionSet(asmType).Instructions;
                 var instructionText = symbol.GetText().TrimPrefix("#");
-                var definitions = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations).ToList();
-                if (definitions.Count != 0)
-                    return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, definitions, null);
+                if (instructions.TryGetValue(instructionText, out var instruction))
+                    return new IntelliSenseInfo(asmType, instructionText, symbol.Type, symbol.Span, instruction.Aliases, instruction.Documentation, null);
             }
             return null;
         }

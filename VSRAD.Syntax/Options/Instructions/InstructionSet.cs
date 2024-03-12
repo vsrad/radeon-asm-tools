@@ -1,38 +1,75 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
-    public enum InstructionType
+    public sealed class Instruction
     {
-        RadAsm1 = 1,
-        RadAsm2 = 2,
-    }
+        public AnalysisToken Documentation { get; }
+        public IReadOnlyList<NavigationToken> Aliases { get; }
 
-#pragma warning disable CA1710 // Identifiers should have correct suffix
-    public interface IInstructionSet : ISet<Instruction>, IReadOnlyCollection<Instruction>
-#pragma warning restore CA1710 // Identifiers should have correct suffix
-    {
-        InstructionType Type { get; }
-        string SetName { get; }
-    }
-
-    internal class InstructionSet : HashSet<Instruction>, IInstructionSet
-    {
-        public InstructionType Type { get; }
-        public string SetName { get; }
-
-        public InstructionSet(string path, InstructionType instructionType)
+        public Instruction(AnalysisToken documentation, IReadOnlyList<NavigationToken> aliases)
         {
-            Type = instructionType;
+            Documentation = documentation;
+            Aliases = aliases;
+        }
+    }
+
+    public interface IInstructionSet
+    {
+        AsmType Type { get; }
+        string SetName { get; }
+
+        /// <summary>Includes all instruction names, including aliases. All aliases point to the same Instruction object.</summary>
+        IReadOnlyDictionary<string, Instruction> Instructions { get; }
+    }
+
+    internal class InstructionSet : IInstructionSet
+    {
+        public AsmType Type { get; }
+        public string SetName { get; }
+        public IReadOnlyDictionary<string, Instruction> Instructions => _instructions;
+
+        private readonly Dictionary<string, Instruction> _instructions = new Dictionary<string, Instruction>();
+
+        public InstructionSet(AsmType type, string path)
+        {
+            Type = type;
             SetName = Path.GetFileNameWithoutExtension(path);
         }
 
-        public void AddInstruction(string text, IReadOnlyList<NavigationToken> navigations)
+        public InstructionSet(AsmType type, IEnumerable<IInstructionSet> subsets)
         {
-            var instruction = new Instruction(text, navigations);
-            Add(instruction);
+            Type = type;
+            SetName = "";
+            foreach (var subset in subsets)
+            {
+                foreach (var instruction in subset.Instructions)
+                    AddInstruction(instruction.Value);
+            }
+        }
+
+        public void AddInstruction(Instruction instruction)
+        {
+            Instruction existingInstruction = null;
+            foreach (var alias in instruction.Aliases)
+            {
+                if (_instructions.TryGetValue(alias.GetText(), out existingInstruction))
+                    break;
+            }
+            if (existingInstruction != null)
+            {
+                var unionAliases = existingInstruction.Aliases.Union(instruction.Aliases).ToList();
+                instruction = new Instruction(existingInstruction.Documentation, unionAliases);
+            }
+            foreach (var alias in instruction.Aliases)
+            {
+                _instructions[alias.GetText()] = instruction;
+            }
         }
     }
 }

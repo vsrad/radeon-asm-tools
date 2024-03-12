@@ -73,7 +73,7 @@ namespace VSRAD.Syntax.IntelliSense
             var descriptionBuilder = new ClassifiedTextBuilder();
             if (info.Definitions.Count != 0)
             {
-                await AppendTokenDefinitionDescriptionAsync(descriptionBuilder, info.Definitions[0], cancellationToken);
+                await AppendTokenDefinitionDescriptionAsync(descriptionBuilder, info.Definitions[0], info.DocComment, cancellationToken);
                 AppendTokenDefinitionList(descriptionBuilder, info.Definitions, cancellationToken);
             }
             else if (info.BuiltinInfo is BuiltinInfo builtinInfo)
@@ -83,7 +83,7 @@ namespace VSRAD.Syntax.IntelliSense
             return descriptionBuilder.Build();
         }
 
-        private async Task AppendTokenDefinitionDescriptionAsync(ClassifiedTextBuilder builder, NavigationToken definition, CancellationToken cancellationToken)
+        private async Task AppendTokenDefinitionDescriptionAsync(ClassifiedTextBuilder builder, NavigationToken definition, AnalysisToken docComment, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -126,8 +126,15 @@ namespace VSRAD.Syntax.IntelliSense
 
             builder.SetAsElement();
 
-            if (TryGetCommentDescription(document.DocumentTokenizer, definition.GetEnd(), cancellationToken, out var message))
+            if (docComment != null)
+            {
+                var comment = GetCommentText(docComment.GetText());
+                builder.AddClassifiedText(comment).SetAsElement();
+            }
+            else if (TryGetCommentDescription(document.DocumentTokenizer, definition.GetEnd(), cancellationToken, out var message))
+            {
                 builder.AddClassifiedText(message).SetAsElement();
+            }
         }
 
         private void AppendTokenDefinitionList(ClassifiedTextBuilder builder, IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken)

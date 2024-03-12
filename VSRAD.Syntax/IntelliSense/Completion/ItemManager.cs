@@ -2,12 +2,14 @@
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.PatternMatching;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
@@ -15,11 +17,13 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     {
         private readonly IPatternMatcherFactory _patternMatcherFactory;
         private readonly IDocumentFactory _documentFactory;
+        private readonly OptionsProvider _optionsProvider;
 
-        public ItemManager(IPatternMatcherFactory patternMatcherFactory, IDocumentFactory documentFactory)
+        public ItemManager(IPatternMatcherFactory patternMatcherFactory, IDocumentFactory documentFactory, OptionsProvider optionsProvider)
         {
             _patternMatcherFactory = patternMatcherFactory;
             _documentFactory = documentFactory;
+            _optionsProvider = optionsProvider;
         }
 
         public Task<ImmutableArray<CompletionItem>> SortCompletionListAsync(IAsyncCompletionSession session, AsyncCompletionSessionInitialDataSnapshot data, CancellationToken token) =>
@@ -65,16 +69,38 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
             // Pattern matcher not only filters, but also provides a way to order the results by their match quality.
             // The relevant CompletionItem is match.Item1, its PatternMatch is match.Item2
-            var patternMatcher = _patternMatcherFactory.CreatePatternMatcher(
-                filterText,
-                new PatternMatcherCreationOptions(System.Globalization.CultureInfo.CurrentCulture, PatternMatcherCreationFlags.IncludeMatchedSpans | PatternMatcherCreationFlags.AllowFuzzyMatching));
+            var patternMatcher = _patternMatcherFactory.CreatePatternMatcher(filterText,
+                new PatternMatcherCreationOptions(System.Globalization.CultureInfo.CurrentCulture,
+                    PatternMatcherCreationFlags.IncludeMatchedSpans | PatternMatcherCreationFlags.AllowSimpleSubstringMatching | PatternMatcherCreationFlags.AllowFuzzyMatching));
 
-            token.ThrowIfCancellationRequested();
-            var matches = data.InitialSortedList
-                // Perform pattern matching
-                .Select(completionItem => (completionItem, patternMatcher.TryMatch(completionItem.FilterText)))
-                // Pick only items that were matched, unless length of filter text is 1
-                .Where(n => (filterText.Length == 1 || n.Item2.HasValue));
+            var matches = new List<(CompletionItem completionItem, PatternMatch?)>();
+            foreach (var completion in data.InitialSortedList)
+            {
+                if (patternMatcher.TryMatch(completion.FilterText) is PatternMatch match)
+                {
+                    bool satisfiesFilter = false;
+                    switch (_optionsProvider.AutocompleteFilter)
+                    {
+                        case AutocompleteFilterMode.Fuzzy:
+                            satisfiesFilter = true;
+                            break;
+                        case AutocompleteFilterMode.Prefix:
+                            satisfiesFilter = match.Kind == PatternMatchKind.Exact || match.Kind == PatternMatchKind.Prefix;
+                            break;
+                        case AutocompleteFilterMode.Substring:
+                            satisfiesFilter = match.Kind == PatternMatchKind.Exact || match.Kind == PatternMatchKind.Prefix || match.Kind == PatternMatchKind.Substring;
+                            break;
+                    }
+                    if (satisfiesFilter)
+                    {
+                        matches.Add((completion, match));
+                    }
+                }
+                else if (filterText.Length == 1)
+                {
+                    matches.Add((completion, null));
+                }
+            }
 
             // See which filters might be enabled based on the typed code
             var textFilteredFilters = matches.SelectMany(n => n.completionItem.Filters).Distinct();
@@ -83,47 +109,39 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             var updatedFilters = ImmutableArray.CreateRange(data.SelectedFilters.Select(n => n.WithAvailability(textFilteredFilters.Contains(n.Filter))));
 
             // Filter by user-selected filters. The value on availableFiltersWithSelectionState conveys whether the filter is selected.
-            var filterFilteredList = matches;
             if (data.SelectedFilters.Any(n => n.IsSelected))
-            {
-                filterFilteredList = matches.Where(n => ShouldBeInCompletionList(n.completionItem, data.SelectedFilters));
-            }
+                matches.RemoveAll(m => !ShouldBeInCompletionList(m.completionItem, data.SelectedFilters));
 
-            var bestMatch = filterFilteredList.OrderByDescending(n => n.Item2.HasValue).ThenBy(n => n.Item2).FirstOrDefault();
-            var listWithHighlights = filterFilteredList.Select(n =>
+            if (matches.Count == 0)
+                return null;
+
+            var bestMatch = matches.OrderByDescending(n => n.Item2.HasValue).ThenBy(n => n.Item2).First();
+
+            var listWithHighlightsBuilder = ImmutableArray.CreateBuilder<CompletionItemWithHighlight>(matches.Count);
+            foreach (var (completionItem, match) in matches)
             {
                 token.ThrowIfCancellationRequested();
 
                 var safeMatchedSpans = ImmutableArray<Span>.Empty;
-                if (n.completionItem.DisplayText == n.completionItem.FilterText)
+                if (completionItem.DisplayText == completionItem.FilterText)
                 {
-                    if (n.Item2.HasValue)
-                    {
-                        safeMatchedSpans = n.Item2.Value.MatchedSpans;
-                    }
+                    if (match.HasValue)
+                        safeMatchedSpans = match.Value.MatchedSpans;
                 }
                 else
                 {
                     // Matches were made against FilterText. We are displaying DisplayText. To avoid issues, re-apply matches for these items
-                    var newMatchedSpans = patternMatcher.TryMatch(n.completionItem.DisplayText);
+                    var newMatchedSpans = patternMatcher.TryMatch(completionItem.DisplayText);
                     if (newMatchedSpans.HasValue)
-                    {
                         safeMatchedSpans = newMatchedSpans.Value.MatchedSpans;
-                    }
                 }
 
                 if (safeMatchedSpans.IsDefaultOrEmpty)
-                {
-                    return new CompletionItemWithHighlight(n.completionItem);
-                }
+                    listWithHighlightsBuilder.Add(new CompletionItemWithHighlight(completionItem));
                 else
-                {
-                    return new CompletionItemWithHighlight(n.completionItem, safeMatchedSpans);
-                }
-            }).ToImmutableArray();
-
-            if (listWithHighlights.Length == 0)
-                return null;
+                    listWithHighlightsBuilder.Add(new CompletionItemWithHighlight(completionItem, safeMatchedSpans));
+            }
+            var listWithHighlights = listWithHighlightsBuilder.MoveToImmutable();
 
             int selectedItemIndex = 0;
             if (data.DisplaySuggestionItem)

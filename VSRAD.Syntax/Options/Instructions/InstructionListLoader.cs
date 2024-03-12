@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
@@ -96,10 +97,10 @@ namespace VSRAD.Syntax.Options.Instructions
                 foreach (var filepath in Directory.EnumerateFiles(path))
                 {
                     if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm1));
+                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, AsmType.RadAsm));
 
                     else if (Path.GetExtension(filepath) == Constants.FileExtensionAsm2Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
+                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, AsmType.RadAsm2));
                 }
 
                 var results = await Task.WhenAll(loadTasks);
@@ -117,28 +118,22 @@ namespace VSRAD.Syntax.Options.Instructions
             return instructionSets;
         }
 
-        private async Task<InstructionSet> LoadInstructionsFromFileAsync(string path, InstructionType type)
+        private async Task<InstructionSet> LoadInstructionsFromFileAsync(string path, AsmType type)
         {
             var document = _documentFactory.Value.GetOrCreateDocument(path);
             var documentAnalysis = document.DocumentAnalysis;
             var snapshot = document.CurrentSnapshot;
             var analysisResult = await documentAnalysis.GetAnalysisResultAsync(snapshot);
-            var instructionSet = new InstructionSet(path, type);
 
-            var instructions = analysisResult.Root.Tokens
-                .Where(t => t.Type == RadAsmTokenType.Instruction);
-
-            var navigationTokens = instructions
-                .Select(i => new NavigationToken(document, i))
-                .GroupBy(n => n.GetText());
-
-            foreach (var instructionNameGroup in navigationTokens)
+            var instructionSet = new InstructionSet(type, path);
+            foreach (var block in analysisResult.Root.Children)
             {
-                var name = instructionNameGroup.Key;
-                var navigations = instructionNameGroup.ToList();
-                instructionSet.AddInstruction(name, navigations);
+                if (block is InstructionDocBlock docBlock)
+                {
+                    var aliases = docBlock.InstructionNames.Distinct(new AnalysisTokenTextComparer()).Select(n => new NavigationToken(document, n)).ToList();
+                    instructionSet.AddInstruction(new Instruction(docBlock.DocComment, aliases));
+                }
             }
-
             return instructionSet;
         }
     }

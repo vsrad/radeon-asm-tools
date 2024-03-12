@@ -36,7 +36,6 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             _providers = new List<RadCompletionProvider>()
             {
                 new InstructionCompletionProvider(optionsEventProvider, instructionListManager),
-                new FunctionCompletionProvider(optionsEventProvider, intelliSenseService),
                 new ScopedCompletionProvider(optionsEventProvider, intelliSenseService),
                 new BuiltinCompletionProvider(optionsEventProvider, builtinInfoProvider)
             };
