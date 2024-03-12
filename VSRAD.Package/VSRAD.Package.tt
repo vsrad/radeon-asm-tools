@@ -321,7 +321,7 @@
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
       </Combo>
-      <Combo guid="guidCmdSetTargetProcessorDropdown" id="TargetProcessorDropdownId" priority="110" type="DynamicCombo" defaultWidth="105" idCommandList="TargetProcessorDropdownListId">
+      <Combo guid="guidCmdSetTargetProcessorDropdown" id="TargetProcessorDropdownId" priority="110" type="DynamicCombo" defaultWidth="115" idCommandList="TargetProcessorDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
