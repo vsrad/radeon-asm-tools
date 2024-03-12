@@ -344,14 +344,14 @@ namespace VSRAD.PackageTests.Server
             var result = await runner.RunAsync("UFOW", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("dvd-prepare process could not be started on the remote machine. Make sure the path to the executable is specified correctly.", result.StepResults[0].Warning);
+            Assert.Equal("Check that the executable is specified correctly. (The remote `dvd-prepare` process could not be started.)", result.StepResults[0].Warning);
             Assert.Equal("No stdout/stderr captured (could not launch)\r\n", result.StepResults[0].Log);
 
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.TimedOut, Stdout = "...\n", Stderr = "Could not prepare master DVD, deadline exceeded.\n\n" });
             result = await runner.RunAsync("UFOW", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("Execution timeout is exceeded. dvd-prepare process on the remote machine is terminated.", result.StepResults[0].Warning);
+            Assert.Equal("Execution timeout is exceeded. (The remote `dvd-prepare` process is terminated.)", result.StepResults[0].Warning);
             Assert.Equal("Captured stdout (timed out):\r\n...\r\nCaptured stderr (timed out):\r\nCould not prepare master DVD, deadline exceeded.\r\n", result.StepResults[0].Log);
 
             /* Non-zero exit code results in a failed run with an error */
@@ -360,7 +360,7 @@ namespace VSRAD.PackageTests.Server
             result = await runner.RunAsync("UFOW", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("dvd-prepare process exited with a non-zero code (1). Check your application or debug script output in Output -> RAD Debug.", result.StepResults[0].Warning);
+            Assert.Equal("Check the errors in Error List and the command output in Output -> RAD Debug. (The remote `dvd-prepare` process exited with non-zero code 1.)", result.StepResults[0].Warning);
             Assert.Equal("Captured stderr (exit code 1):\r\nLooks like you fell asleep ¯\\_(ツ)_/¯\r\n", result.StepResults[0].Log);
         }
 

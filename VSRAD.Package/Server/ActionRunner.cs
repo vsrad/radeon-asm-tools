@@ -301,11 +301,11 @@ namespace VSRAD.Package.Server
                 case ExecutionStatus.Completed when response.ExitCode == 0:
                     return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.Completed:
-                    return new StepResult(false, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
+                    return new StepResult(false, $"Check the errors in Error List and the command output in Output -> RAD Debug. (The {machine} `{step.Executable}` process exited with non-zero code {response.ExitCode}.)", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.TimedOut:
-                    return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
+                    return new StepResult(false, $"Execution timeout is exceeded. (The {machine} `{step.Executable}` process is terminated.)", log.ToString());
                 default:
-                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. Make sure the path to the executable is specified correctly.", log.ToString());
+                    return new StepResult(false, $"Check that the executable is specified correctly. (The {machine} `{step.Executable}` process could not be started.)", log.ToString());
             }
         }
 

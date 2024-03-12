@@ -75,6 +75,16 @@ namespace VSRAD.Package.Server
             }
         }
 
+        public string GetUnsuccessfulActionName()
+        {
+            foreach (var step in StepResults)
+            {
+                if (!step.Successful)
+                    return step.SubAction?.GetUnsuccessfulActionName() ?? ActionName;
+            }
+            return "";
+        }
+
         private long MeasureInterval()
         {
             var currentTime = _stopwatch.ElapsedMilliseconds;

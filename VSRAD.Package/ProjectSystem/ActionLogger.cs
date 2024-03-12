@@ -70,7 +70,7 @@ namespace VSRAD.Package.ProjectSystem
                     if (actionSucceeded)
                         return new Error(warnings.ToString(), critical: false, title: runResult.ActionName + " Warning");
                     else
-                        return new Error(warnings.ToString(), critical: true, title: runResult.ActionName + " Error");
+                        return new Error(warnings.ToString(), critical: true, title: runResult.GetUnsuccessfulActionName() + " Error");
                 }
                 return default;
             }
