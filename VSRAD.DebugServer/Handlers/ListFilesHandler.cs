@@ -17,7 +17,8 @@ namespace VSRAD.DebugServer.Handlers
         public Task<IResponse> RunAsync()
         {
             var files = FileMetadata.GetMetadataForPath(_command.Path, _command.IncludeSubdirectories);
-            return Task.FromResult<IResponse>(new ListFilesResponse { Files = files.ToArray() });
+            var response = new ListFilesResponse { Files = files.ToArray() };
+            return Task.FromResult<IResponse>(new CompressedResponse(response));
         }
     }
 }
