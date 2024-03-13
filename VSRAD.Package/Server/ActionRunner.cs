@@ -28,20 +28,23 @@ namespace VSRAD.Package.Server
         }
     }
 
+    public interface IActionRunnerCallbacks
+    {
+        void OnOpenFileInEditorRequested(string filePath, string lineMarker);
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
-        private readonly SVsServiceProvider _serviceProvider;
-        private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
+        private readonly IActionRunnerCallbacks _callbacks;
         private readonly ActionEnvironment _environment;
-        private readonly IProject _project;
+        private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ActionEnvironment environment, IProject project)
+        public ActionRunner(ICommunicationChannel channel, IActionRunnerCallbacks callbacks, ActionEnvironment environment)
         {
             _channel = channel;
-            _serviceProvider = serviceProvider;
+            _callbacks = callbacks;
             _environment = environment;
-            _project = project;
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>
@@ -320,8 +323,7 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, null, step.LineMarker,
-                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
+            _callbacks.OnOpenFileInEditorRequested(step.Path, step.LineMarker);
             return new StepResult(true, "", "");
         }
 

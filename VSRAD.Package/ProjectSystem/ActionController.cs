@@ -24,7 +24,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IActionController))]
-    public sealed class ActionController : IActionController
+    public sealed class ActionController : IActionController, IActionRunnerCallbacks
     {
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
@@ -190,7 +190,7 @@ namespace VSRAD.Package.ProjectSystem
                 _projectSourceManager.SaveProjectState();
 
                 var env = new ActionEnvironment(watches, breakTarget);
-                var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
+                var runner = new ActionRunner(_channel, this, env);
                 var runResult = await Task.Run(() => runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token)).ConfigureAwait(false);
                 return runResult;
             }
@@ -198,6 +198,12 @@ namespace VSRAD.Package.ProjectSystem
             {
                 await _statusBar.ClearAsync();
             }
+        }
+
+        void IActionRunnerCallbacks.OnOpenFileInEditorRequested(string filePath, string lineMarker)
+        {
+            VsEditor.OpenFileInEditor(_serviceProvider, filePath, line: null, lineMarker,
+                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
         }
     }
 }
