@@ -38,6 +38,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SemaphoreSlim _runningActionSemaphore = new SemaphoreSlim(1, 1);
         private string _runningActionName;
         private CancellationTokenSource _runningActionTokenSource;
+        private (uint CurrentStep, uint TotalSteps) _runningActionProgress;
 
         public bool IsActionRunning => _runningActionName != null;
 
@@ -97,7 +98,7 @@ namespace VSRAD.Package.ProjectSystem
                     actionRun = new Error($"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                         "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.");
                 else
-                    actionRun = await LaunchActionAsync(action, debugBreakTarget);
+                    actionRun = await RunActionAsync(action, debugBreakTarget);
             }
             finally
             {
@@ -117,6 +118,7 @@ namespace VSRAD.Package.ProjectSystem
                     {
                         _runningActionName = null;
                         _runningActionTokenSource = null;
+                        _runningActionProgress = default;
 
                         if (actionReadsDebugData)
                             _debuggerIntegration.NotifyDebugActionExecuted(actionRun, debugBreakTarget);
@@ -124,10 +126,16 @@ namespace VSRAD.Package.ProjectSystem
                         var error = await _actionLogger.LogActionRunAsync(actionName, actionRun);
                         if (error != default)
                         {
+                            await _statusBar.SetTextAsync($"Action {actionName} failed");
+
 #pragma warning disable VSTHRD001 // Using BeginInvoke to show the error popup after the Error List window is refreshed
                             _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
                                 (Action)(() => Errors.Show(error)), System.Windows.Threading.DispatcherPriority.ContextIdle);
 #pragma warning restore VSTHRD001
+                        }
+                        else
+                        {
+                            await _statusBar.SetTextAsync($"Action {actionName} finished");
                         }
                     }
                 }
@@ -151,20 +159,23 @@ namespace VSRAD.Package.ProjectSystem
             }
         }
 
-        private async Task<Result<ActionRunResult>> LaunchActionAsync(Options.ActionProfileOptions action, BreakTargetSelector debugBreakTarget)
+        private async Task<Result<ActionRunResult>> RunActionAsync(Options.ActionProfileOptions action, BreakTargetSelector debugBreakTarget)
         {
-            var activeEditor = _projectSourceManager.GetActiveEditorView();
-            var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
-            var debugFile = _projectSourceManager.DebugStartupPath ?? activeFile;
-            var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            var breakTarget = _breakpointTracker.GetTarget(debugFile, debugBreakTarget);
-            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, debugFile, _project.Options.TargetProcessor);
-
             try
             {
-                await _statusBar.SetTextAsync("Running " + action.Name + " action...");
+                await _statusBar.SetTextAsync($"Action {action.Name} running...");
 
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _project.Options.DebuggerOptions.UpdateLastAppArgs();
+                _projectSourceManager.SaveProjectState();
+
+                var activeEditor = _projectSourceManager.GetActiveEditorView();
+                var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
+                var debugFile = _projectSourceManager.DebugStartupPath ?? activeFile;
+                var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
+                var breakTarget = _breakpointTracker.GetTarget(debugFile, debugBreakTarget);
+                var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, debugFile, _project.Options.TargetProcessor);
+                var actionEnv = new ActionEnvironment(watches, breakTarget);
 
                 var projectProperties = _project.GetProjectProperties();
                 var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
@@ -186,18 +197,35 @@ namespace VSRAD.Package.ProjectSystem
                 if (!evalResult.TryGetResult(out action, out evalError))
                     return evalError;
 
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                _projectSourceManager.SaveProjectState();
+                uint CountActionSteps(IEnumerable<Options.IActionStep> steps)
+                {
+                    uint numSteps = 0;
+                    foreach (var step in steps)
+                    {
+                        numSteps++;
+                        if (step is Options.RunActionStep runAction)
+                            numSteps += CountActionSteps(runAction.EvaluatedSteps);
+                    }
+                    return numSteps;
+                }
+                _runningActionProgress = (CurrentStep: 0, TotalSteps: CountActionSteps(action.Steps));
 
-                var env = new ActionEnvironment(watches, breakTarget);
-                var runner = new ActionRunner(_channel, this, env);
-                var runResult = await Task.Run(() => runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token)).ConfigureAwait(false);
+                var runner = new ActionRunner(_channel, this, actionEnv);
+                var runResult = await Task.Run(() =>
+                    runner.RunAsync(action.Name, action.Steps, general.ContinueActionExecOnError, _runningActionTokenSource.Token)).ConfigureAwait(false);
                 return runResult;
             }
             finally
             {
                 await _statusBar.ClearAsync();
             }
+        }
+
+        void IActionRunnerCallbacks.OnNextStepStarted()
+        {
+            _runningActionProgress.CurrentStep = Math.Min(_runningActionProgress.CurrentStep + 1, _runningActionProgress.TotalSteps);
+            ThreadHelper.JoinableTaskFactory.RunAsync(() =>
+                _statusBar.SetTextWithProgressAsync($"Action {_runningActionName} running...", _runningActionProgress.CurrentStep, _runningActionProgress.TotalSteps + 1));
         }
 
         void IActionRunnerCallbacks.OnOpenFileInEditorRequested(string filePath, string lineMarker)

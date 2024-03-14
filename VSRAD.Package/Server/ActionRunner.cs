@@ -30,6 +30,7 @@ namespace VSRAD.Package.Server
 
     public interface IActionRunnerCallbacks
     {
+        void OnNextStepStarted();
         void OnOpenFileInEditorRequested(string filePath, string lineMarker);
     }
 
@@ -60,6 +61,7 @@ namespace VSRAD.Package.Server
             for (int i = 0; i < steps.Count; ++i)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                _callbacks.OnNextStepStarted();
 
                 StepResult result;
                 switch (steps[i])
