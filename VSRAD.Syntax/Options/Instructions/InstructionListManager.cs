@@ -108,11 +108,10 @@ namespace VSRAD.Syntax.Options.Instructions
             ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
             {
                 var selected = await (_syntaxPackageBridge?.GetSelectedTargetProcessor() ?? Task.FromResult<(string, string)>(default));
-                var selectedSet = selected.SyntaxName;
                 switch (activeDocumentAsm)
                 {
-                    case AsmType.RadAsm: radAsm1SelectedSet = _radAsm1InstructionSets.Find(s => string.Equals(s.SetName, selectedSet, StringComparison.OrdinalIgnoreCase)); break;
-                    case AsmType.RadAsm2: radAsm2SelectedSet = _radAsm2InstructionSets.Find(s => string.Equals(s.SetName, selectedSet, StringComparison.OrdinalIgnoreCase)); break;
+                    case AsmType.RadAsm: radAsm1SelectedSet = _radAsm1InstructionSets.Find(s => string.Equals(s.SetName, selected.InstructionSet, StringComparison.OrdinalIgnoreCase)); break;
+                    case AsmType.RadAsm2: radAsm2SelectedSet = _radAsm2InstructionSets.Find(s => string.Equals(s.SetName, selected.InstructionSet, StringComparison.OrdinalIgnoreCase)); break;
                 }
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 InstructionsUpdated?.Invoke(this, activeDocumentAsm);

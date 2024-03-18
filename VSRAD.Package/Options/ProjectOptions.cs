@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using VSRAD.Package.ProjectSystem.Profiles;
 using VSRAD.Package.Utils;
@@ -32,14 +33,11 @@ namespace VSRAD.Package.Options
         public MruCollection<string> TargetHosts { get; } =
             new MruCollection<string>();
 
-        [JsonConverter(typeof(MruCollection<string>.Converter))]
-        public MruCollection<string> TargetProcessors { get; } =
-            new MruCollection<string>();
+        [JsonConverter(typeof(MruCollection<TargetProcessor>.Converter))]
+        public MruCollection<TargetProcessor> UserTargetProcessors { get; } =
+            new MruCollection<TargetProcessor>();
 
-        public string TargetProcessor { get; set; }
-
-        [JsonIgnore]
-        public string DefaultTargetProcessor => Profile?.General?.DefaultTargetProcessor ?? "";
+        public TargetProcessor? SelectedTargetProcessor { get; set; }
 
         public ProjectOptions() { }
 
@@ -236,5 +234,36 @@ namespace VSRAD.Package.Options
             }
         }
         #endregion
+    }
+
+    public readonly struct TargetProcessor : IEquatable<TargetProcessor>
+    {
+        public string Processor { get; }
+        public string InstructionSet { get; }
+
+        private static readonly Regex _targetProcessorInstructionSetRegex =
+            new Regex(@"^(?<processor>.+)\((?<set>.*)\)", RegexOptions.Compiled);
+
+        [JsonConstructor]
+        public TargetProcessor(string processor, string instructionSet)
+        {
+            Processor = processor;
+            InstructionSet = instructionSet;
+        }
+
+        public TargetProcessor(string stringifiedValue)
+        {
+            var match = _targetProcessorInstructionSetRegex.Match(stringifiedValue);
+            Processor = match.Success ? match.Groups["processor"].Value.TrimEnd() : stringifiedValue;
+            InstructionSet = match.Success ? match.Groups["set"].Value.TrimEnd() : stringifiedValue;
+        }
+
+        public override string ToString() => Processor == InstructionSet ? Processor : $"{Processor} ({InstructionSet})";
+
+        public bool Equals(TargetProcessor p) => Processor == p.Processor && InstructionSet == p.InstructionSet;
+        public override bool Equals(object o) => o is TargetProcessor p && Equals(p);
+        public override int GetHashCode() => (Processor, InstructionSet).GetHashCode();
+        public static bool operator ==(TargetProcessor left, TargetProcessor right) => left.Equals(right);
+        public static bool operator !=(TargetProcessor left, TargetProcessor right) => !(left == right);
     }
 }

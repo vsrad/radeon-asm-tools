@@ -2,19 +2,20 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
+using VSRAD.Package.Options;
 using VSRAD.SyntaxPackageBridge;
 
 namespace VSRAD.Package.ProjectSystem
 {
-    public sealed class TargetProcessorSelectionEventArgs : EventArgs
+    public sealed class SelectedTargetProcessorEventArgs : EventArgs
     {
-        public Task<(string TargetProcessor, string SyntaxName)> Selection { get; set; }
+        public Task<(string Processor, string InstructionSet)> Selection { get; set; }
     }
 
     public interface ISyntaxIntegration
     {
-        event EventHandler<TargetProcessorSelectionEventArgs> OnGetSelectedTargetProcessor;
-        IReadOnlyList<(string TargetProcessor, string SyntaxName)> GetTargetProcessorList();
+        event EventHandler<SelectedTargetProcessorEventArgs> OnGetSelectedTargetProcessor;
+        IEnumerable<TargetProcessor> GetPredefinedTargetProcessors();
         void NotifyTargetProcessorChanged();
     }
 
@@ -23,13 +24,15 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class SyntaxIntegration : ISyntaxIntegration, ISyntaxPackageBridge
     {
         #region ISyntaxIntegration
-        public event EventHandler<TargetProcessorSelectionEventArgs> OnGetSelectedTargetProcessor;
+        public event EventHandler<SelectedTargetProcessorEventArgs> OnGetSelectedTargetProcessor;
 
-        IReadOnlyList<(string TargetProcessor, string SyntaxName)> ISyntaxIntegration.GetTargetProcessorList()
+        IEnumerable<TargetProcessor> ISyntaxIntegration.GetPredefinedTargetProcessors()
         {
             var args = new TargetProcessorListEventArgs();
             PackageRequestedTargetProcessorList?.Invoke(this, args);
-            return args.List ?? Array.Empty<(string, string)>();
+            var list = args.List ?? Array.Empty<(string, string)>();
+            foreach (var (processor, instructionSet) in list)
+                yield return new TargetProcessor(processor, instructionSet);
         }
 
         void ISyntaxIntegration.NotifyTargetProcessorChanged() =>
@@ -40,9 +43,9 @@ namespace VSRAD.Package.ProjectSystem
         public event EventHandler<TargetProcessorListEventArgs> PackageRequestedTargetProcessorList;
         public event EventHandler<EventArgs> PackageUpdatedSelectedTargetProcessor;
 
-        Task<(string TargetProcessor, string SyntaxName)> ISyntaxPackageBridge.GetSelectedTargetProcessor()
+        Task<(string Processor, string InstructionSet)> ISyntaxPackageBridge.GetSelectedTargetProcessor()
         {
-            var args = new TargetProcessorSelectionEventArgs();
+            var args = new SelectedTargetProcessorEventArgs();
             OnGetSelectedTargetProcessor?.Invoke(this, args);
             return args.Selection;
         }

@@ -21,7 +21,7 @@
                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="24">
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="*">
+                <DataGridTextColumn Binding="{Binding FormattedValue, UpdateSourceTrigger=PropertyChanged}" Width="*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -33,6 +33,7 @@
                             <Setter Property="VerticalContentAlignment" Value="Center" />
                             <Setter Property="Padding" Value="3,0" />
                             <Setter Property="Height" Value="22" />
+                            <Setter Property="IsEnabled" Value="{Binding Editable, Mode=OneWay, FallbackValue=True}" />
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
@@ -43,6 +44,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Button Content="❌" ToolTip="Remove" Width="22" Height="22" HorizontalAlignment="Center"
+                                    IsEnabled="{Binding Editable, Mode=OneWay, FallbackValue=True}"
                                     Command="{Binding RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

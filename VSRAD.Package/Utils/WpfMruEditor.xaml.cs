@@ -59,7 +59,7 @@ namespace VSRAD.Package.Utils
 
         private void RemoveItem(object item)
         {
-            var prompt = MessageBox.Show($"Are you sure you want to remove {((dynamic)item).Value}?", "Confirm removal", MessageBoxButton.YesNo);
+            var prompt = MessageBox.Show($"Are you sure you want to remove {((dynamic)item).FormattedValue}?", "Confirm removal", MessageBoxButton.YesNo);
             if (prompt == MessageBoxResult.Yes)
                 Items.Remove(item);
         }

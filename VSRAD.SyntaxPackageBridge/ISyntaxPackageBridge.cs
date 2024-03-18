@@ -6,7 +6,7 @@ namespace VSRAD.SyntaxPackageBridge
 {
     public sealed class TargetProcessorListEventArgs : EventArgs
     {
-        public IReadOnlyList<(string TargetProcessor, string SyntaxName)> List { get; set; }
+        public IReadOnlyList<(string Processor, string InstructionSet)> List { get; set; }
     }
 
     /// <summary>
@@ -22,6 +22,6 @@ namespace VSRAD.SyntaxPackageBridge
         event EventHandler<EventArgs> PackageUpdatedSelectedTargetProcessor;
 
         /// <summary>Request the selected target processor from the Package extension.</summary>
-        Task<(string TargetProcessor, string SyntaxName)> GetSelectedTargetProcessor();
+        Task<(string Processor, string InstructionSet)> GetSelectedTargetProcessor();
     }
 }

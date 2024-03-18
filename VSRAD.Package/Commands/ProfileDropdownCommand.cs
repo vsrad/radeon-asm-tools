@@ -127,8 +127,8 @@ namespace VSRAD.Package.Commands
 
         public sealed class HostItem : DefaultNotifyPropertyChanged
         {
-            private string _value = "";
-            public string Value { get => _value; set => SetField(ref _value, value); }
+            private string _formattedValue = "";
+            public string FormattedValue { get => _formattedValue; set => SetField(ref _formattedValue, value); }
 
             public bool UsedInActiveProfile { get; set; }
         }
@@ -136,15 +136,15 @@ namespace VSRAD.Package.Commands
         private void OpenHostsEditor()
         {
             var initHostItems = _project.Options.TargetHosts.Select(h =>
-                 new HostItem { Value = h, UsedInActiveProfile = !_project.Options.Profile.General.RunActionsLocally && _project.Options.Connection.ToString() == h });
+                 new HostItem { FormattedValue = h, UsedInActiveProfile = !_project.Options.Profile.General.RunActionsLocally && _project.Options.Connection.ToString() == h });
             var editor = new WpfMruEditor("Host", initHostItems)
             {
-                CreateItem = () => new HostItem { Value = "", UsedInActiveProfile = false },
+                CreateItem = () => new HostItem { FormattedValue = "", UsedInActiveProfile = false },
                 ValidateEditedItem = (item) =>
                 {
-                    if (item is HostItem host && TryParseHost(host.Value, out var formattedHost, out _, out _))
+                    if (item is HostItem host && TryParseHost(host.FormattedValue, out var formattedHost, out _, out _))
                     {
-                        host.Value = formattedHost;
+                        host.FormattedValue = formattedHost;
                         return true;
                     }
                     return false;
@@ -154,17 +154,17 @@ namespace VSRAD.Package.Commands
                     if (items.Count != _project.Options.TargetHosts.Count)
                         return true;
                     for (int i = 0; i < items.Count; ++i)
-                        if (((HostItem)items[i]).Value != _project.Options.TargetHosts[i])
+                        if (((HostItem)items[i]).FormattedValue != _project.Options.TargetHosts[i])
                             return true;
                     return false;
                 },
                 SaveChanges = (items) =>
                 {
                     _project.Options.TargetHosts.Clear();
-                    _project.Options.TargetHosts.AddRange(items.Select(h => ((HostItem)h).Value).Distinct());
+                    _project.Options.TargetHosts.AddRange(items.Select(h => ((HostItem)h).FormattedValue).Distinct());
 
                     var updatedProfile = (ProfileOptions)_project.Options.Profile.Clone();
-                    if (items.FirstOrDefault(h => ((HostItem)h).UsedInActiveProfile) is HostItem hi && TryParseHost(hi.Value, out _, out var hostname, out var port))
+                    if (items.FirstOrDefault(h => ((HostItem)h).UsedInActiveProfile) is HostItem hi && TryParseHost(hi.FormattedValue, out _, out var hostname, out var port))
                     {
                         _project.Options.RemoteMachine = hostname;
                         _project.Options.Port = port;
