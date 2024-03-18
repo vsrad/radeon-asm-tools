@@ -303,6 +303,10 @@
     <VSIXSourceItem Include="DefaultConfiguration\**" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\VSRAD.SyntaxPackageBridge\VSRAD.SyntaxPackageBridge.csproj">
+      <Project>{3443160f-4d33-401f-8886-5c4218df6bdc}</Project>
+      <Name>VSRAD.SyntaxPackageBridge</Name>
+    </ProjectReference>
     <ProjectReference Include="..\VSRAD.SyntaxParser\VSRAD.SyntaxParser.csproj">
       <Project>{ccc917d5-5dd9-4e11-a5b3-9204e8fdc408}</Project>
       <Name>VSRAD.SyntaxParser</Name>

@@ -369,6 +369,10 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <IncludeOutputGroupsInVSIX>TemplateProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
     </ProjectReference>
+    <ProjectReference Include="..\VSRAD.SyntaxPackageBridge\VSRAD.SyntaxPackageBridge.csproj">
+      <Project>{3443160f-4d33-401f-8886-5c4218df6bdc}</Project>
+      <Name>VSRAD.SyntaxPackageBridge</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <XamlPropertyProjectItemsSchema Include="BuildSystem\Rules\ProjectItemsSchema.xaml">
