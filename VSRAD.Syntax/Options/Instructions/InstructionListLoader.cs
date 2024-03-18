@@ -125,7 +125,14 @@ namespace VSRAD.Syntax.Options.Instructions
             var snapshot = document.CurrentSnapshot;
             var analysisResult = await documentAnalysis.GetAnalysisResultAsync(snapshot);
 
-            var instructionSet = new InstructionSet(type, path);
+            var setName = Path.GetFileNameWithoutExtension(path);
+            var targets = new List<string>();
+            if (analysisResult.Root.Tokens.Find(t => t is DocTargetListToken) is DocTargetListToken targetListToken)
+                targets.AddRange(targetListToken.TargetList);
+            else
+                targets.Add(setName);
+
+            var instructionSet = new InstructionSet(type, setName, targets);
             foreach (var block in analysisResult.Root.Children)
             {
                 if (block is InstructionDocBlock docBlock)

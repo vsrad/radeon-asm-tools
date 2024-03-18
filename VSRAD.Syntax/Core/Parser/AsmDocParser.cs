@@ -30,7 +30,18 @@ namespace VSRAD.Syntax.Core.Parser
                 cancellation.ThrowIfCancellationRequested();
                 var token = tokens[i];
 
-                if (token.Type == RadAsmDocLexer.LET)
+                if (token.Type == RadAsmDocLexer.TARGETS)
+                {
+                    if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER_LIST)
+                    {
+                        var definition = new DefinitionToken(RadAsmTokenType.GlobalVariable, tokens[i], version);
+                        var targetList = tokens[i + 1].GetText(version).Trim('{', '}', ' ').Split(',').Select(t => t.Trim()).ToArray();
+                        var targetListToken = new DocTargetListToken(RadAsmTokenType.Keyword, definition, targetList, version);
+                        currentBlock.AddToken(targetListToken);
+                        i += 1;
+                    }
+                }
+                else if (token.Type == RadAsmDocLexer.LET)
                 {
                     if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                     {

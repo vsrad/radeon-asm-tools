@@ -1,3 +1,5 @@
+RadAsmTargets { gfx1030, gfx1031, gfx1032 }
+
 /* 
  * Interpolation attribute and channel: 
  * 

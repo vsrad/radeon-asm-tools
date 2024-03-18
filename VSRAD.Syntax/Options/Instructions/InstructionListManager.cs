@@ -20,15 +20,18 @@ namespace VSRAD.Syntax.Options.Instructions
     [Export(typeof(IInstructionListManager))]
     internal sealed class InstructionListManager : IInstructionListManager
     {
+        private static readonly InstructionSet _radAsm1EmptySet = new InstructionSet(AsmType.RadAsm, Enumerable.Empty<IInstructionSet>());
+        private static readonly InstructionSet _radAsm2EmptySet = new InstructionSet(AsmType.RadAsm2, Enumerable.Empty<IInstructionSet>());
+
         private readonly SyntaxPackageBridge.ISyntaxPackageBridge _syntaxPackageBridge;
         private readonly List<IInstructionSet> _radAsm1InstructionSets;
         private readonly List<IInstructionSet> _radAsm2InstructionSets;
         private IInstructionSet _radAsm1InstructionsSetsUnion;
         private IInstructionSet _radAsm2InstructionsSetsUnion;
 
-        private AsmType activeDocumentAsm;
-        private IInstructionSet radAsm1SelectedSet;
-        private IInstructionSet radAsm2SelectedSet;
+        private AsmType _activeDocumentAsm;
+        private IInstructionSet _radAsm1SelectedSet = _radAsm1EmptySet;
+        private IInstructionSet _radAsm2SelectedSet = _radAsm2EmptySet;
 
         public event InstructionsUpdateDelegate InstructionsUpdated;
 
@@ -53,7 +56,7 @@ namespace VSRAD.Syntax.Options.Instructions
             _radAsm2InstructionSets = new List<IInstructionSet>();
             _radAsm1InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm, Enumerable.Empty<InstructionSet>());
             _radAsm2InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm2, Enumerable.Empty<InstructionSet>());
-            activeDocumentAsm = AsmType.Unknown;
+            _activeDocumentAsm = AsmType.Unknown;
         }
 
         private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructionSets)
@@ -77,8 +80,8 @@ namespace VSRAD.Syntax.Options.Instructions
         {
             switch (asmType)
             {
-                case AsmType.RadAsm: return radAsm1SelectedSet ?? _radAsm1InstructionsSetsUnion;
-                case AsmType.RadAsm2: return radAsm2SelectedSet ?? _radAsm2InstructionsSetsUnion;
+                case AsmType.RadAsm: return _radAsm1SelectedSet;
+                case AsmType.RadAsm2: return _radAsm2SelectedSet;
                 default: return new InstructionSet(default, Enumerable.Empty<IInstructionSet>());
             }
         }
@@ -96,34 +99,47 @@ namespace VSRAD.Syntax.Options.Instructions
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
             var newActiveDocumentAsm = activeDocument == null ? AsmType.Unknown : activeDocument.CurrentSnapshot.GetAsmType();
-            if (newActiveDocumentAsm != activeDocumentAsm)
+            if (newActiveDocumentAsm != _activeDocumentAsm)
             {
-                activeDocumentAsm = newActiveDocumentAsm;
+                _activeDocumentAsm = newActiveDocumentAsm;
                 SelectedInstructionSetUpdated(this, new EventArgs());
             }
         }
 
         private void SelectedInstructionSetUpdated(object sender, EventArgs e)
         {
-            ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
+            if ((_activeDocumentAsm & AsmType.RadAsmCode) != 0)
             {
-                var selected = await (_syntaxPackageBridge?.GetSelectedTargetProcessor() ?? Task.FromResult<(string, string)>(default));
-                switch (activeDocumentAsm)
+                ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
                 {
-                    case AsmType.RadAsm: radAsm1SelectedSet = _radAsm1InstructionSets.Find(s => string.Equals(s.SetName, selected.InstructionSet, StringComparison.OrdinalIgnoreCase)); break;
-                    case AsmType.RadAsm2: radAsm2SelectedSet = _radAsm2InstructionSets.Find(s => string.Equals(s.SetName, selected.InstructionSet, StringComparison.OrdinalIgnoreCase)); break;
-                }
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                InstructionsUpdated?.Invoke(this, activeDocumentAsm);
-            });
+                    var selected = await (_syntaxPackageBridge?.GetSelectedTargetProcessor() ?? Task.FromResult<(string, string)>(default));
+                    switch (_activeDocumentAsm)
+                    {
+                        case AsmType.RadAsm:
+                            _radAsm1SelectedSet = selected.InstructionSet == null
+                                ? _radAsm1InstructionsSetsUnion
+                                : _radAsm1InstructionSets.Find(s => string.Equals(s.SetName, selected.InstructionSet, StringComparison.OrdinalIgnoreCase))
+                                    ?? _radAsm1EmptySet;
+                            break;
+                        case AsmType.RadAsm2:
+                            _radAsm2SelectedSet = selected.InstructionSet == null
+                                ? _radAsm2InstructionsSetsUnion
+                                : _radAsm2InstructionSets.Find(s => string.Equals(s.SetName, selected.InstructionSet, StringComparison.OrdinalIgnoreCase))
+                                    ?? _radAsm2EmptySet;
+                            break;
+                    }
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    InstructionsUpdated?.Invoke(this, _activeDocumentAsm);
+                });
+            }
         }
 
         private void GetInstructionSetList(object sender, SyntaxPackageBridge.TargetProcessorListEventArgs e)
         {
-            switch (activeDocumentAsm)
+            switch (_activeDocumentAsm)
             {
-                case AsmType.RadAsm: e.List = _radAsm1InstructionSets.Select(s => (TargetProcessor: s.SetName, SyntaxName: s.SetName)).ToList(); break;
-                case AsmType.RadAsm2: e.List = _radAsm2InstructionSets.Select(s => (TargetProcessor: s.SetName, SyntaxName: s.SetName)).ToList(); break;
+                case AsmType.RadAsm: e.List = _radAsm1InstructionSets.SelectMany(s => s.Targets.Select(t => (Processor: t, InstructionSet: s.SetName))).ToList(); break;
+                case AsmType.RadAsm2: e.List = _radAsm2InstructionSets.SelectMany(s => s.Targets.Select(t => (Processor: t, InstructionSet: s.SetName))).ToList(); break;
             }
         }
     }

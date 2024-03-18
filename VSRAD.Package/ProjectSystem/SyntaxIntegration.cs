@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.SyntaxPackageBridge;
@@ -31,8 +32,7 @@ namespace VSRAD.Package.ProjectSystem
             var args = new TargetProcessorListEventArgs();
             PackageRequestedTargetProcessorList?.Invoke(this, args);
             var list = args.List ?? Array.Empty<(string, string)>();
-            foreach (var (processor, instructionSet) in list)
-                yield return new TargetProcessor(processor, instructionSet);
+            return list.OrderBy(t => t).Select(t => new TargetProcessor(t.Processor, t.InstructionSet));
         }
 
         void ISyntaxIntegration.NotifyTargetProcessorChanged() =>

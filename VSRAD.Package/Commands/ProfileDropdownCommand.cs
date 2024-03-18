@@ -137,7 +137,7 @@ namespace VSRAD.Package.Commands
         {
             var initHostItems = _project.Options.TargetHosts.Select(h =>
                  new HostItem { FormattedValue = h, UsedInActiveProfile = !_project.Options.Profile.General.RunActionsLocally && _project.Options.Connection.ToString() == h });
-            var editor = new WpfMruEditor("Host", initHostItems)
+            var editor = new WpfMruEditor("Host", @"Syntax: ""hostname:port""", initHostItems)
             {
                 CreateItem = () => new HostItem { FormattedValue = "", UsedInActiveProfile = false },
                 ValidateEditedItem = (item) =>

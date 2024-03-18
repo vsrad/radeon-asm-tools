@@ -29,6 +29,8 @@ namespace VSRAD.Package.Commands
         private string _autoSelectedTargetProcessor;
         private bool _autoSelectedTargetProcessorRequested;
 
+        private const string _unionInstructionSetName = "ALL";
+
         [ImportingConstructor]
         public TargetProcessorDropdownCommand(IProject project, ICommunicationChannel channel, ISyntaxIntegration syntaxIntegration)
         {
@@ -95,12 +97,22 @@ namespace VSRAD.Package.Commands
         {
             e.Selection = Task.Run(async () =>
             {
-                var processor = _project.Options.SelectedTargetProcessor != null
-                    ? _project.Options.SelectedTargetProcessor.Value.Processor
-                    : await GetAutoTargetProcessorAsync();
-                var instructionSet = _project.Options.SelectedTargetProcessor != null
-                    ? _project.Options.SelectedTargetProcessor.Value.InstructionSet
-                    : _syntaxIntegration.GetPredefinedTargetProcessors().FirstOrDefault(p => p.Processor == processor || p.InstructionSet == processor).InstructionSet;
+                var predefinedTargets = _syntaxIntegration.GetPredefinedTargetProcessors().ToList();
+
+                var processor = _project.Options.SelectedTargetProcessor?.Processor
+                    ?? await GetAutoTargetProcessorAsync();
+                var instructionSet = _project.Options.SelectedTargetProcessor?.InstructionSet
+                    ?? predefinedTargets.Find(p => string.Equals(p.Processor, processor, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(p.InstructionSet, processor, StringComparison.OrdinalIgnoreCase)).InstructionSet
+                    ?? processor;
+
+                if (string.IsNullOrEmpty(instructionSet) || string.Equals(instructionSet, _unionInstructionSetName, StringComparison.OrdinalIgnoreCase))
+                    instructionSet = null;
+                else if (predefinedTargets.Count > 0 && !predefinedTargets.Exists(t => string.Equals(t.InstructionSet, instructionSet, StringComparison.OrdinalIgnoreCase)))
+                    Errors.ShowWarning($"Instruction set \"{instructionSet}\" is not supported. Syntax highlighting and autocompletion will be limited in this file."
+                        + "\r\n\r\nYou can change the instruction set in the RAD Debug toolbar. Supported instruction sets are: "
+                        + string.Join(", ", predefinedTargets.Select(t => $@"""{t.InstructionSet}""").Append($@"""{_unionInstructionSetName}""").Distinct()) + ".");
+
                 return (processor, instructionSet);
             });
         }
@@ -166,7 +178,11 @@ namespace VSRAD.Package.Commands
         private void OpenProcessorSyntaxItemEditor()
         {
             var initProcessorSyntaxList = EnumerateProcessorSyntaxItems();
-            var editor = new WpfMruEditor("Target Processor (Syntax)", initProcessorSyntaxList)
+            var helpMessage = $@"Syntax examples:
+1) ""gfx9"" is equivalent to ""gfx9 (gfx9)"";
+2) ""gfx906 (gfx9)"" targets ""gfx906"", uses the ""gfx9"" instruction set for IntelliSense;
+3) ""gfx906 ({_unionInstructionSetName})"" targets ""gfx906"", uses a union of all instruction sets for IntelliSense.";
+            var editor = new WpfMruEditor("Target Processor (Syntax)", helpMessage, initProcessorSyntaxList)
             {
                 CreateItem = () => new ProcessorSyntaxItem { FormattedValue = "", Editable = true },
                 ValidateEditedItem = (item) =>

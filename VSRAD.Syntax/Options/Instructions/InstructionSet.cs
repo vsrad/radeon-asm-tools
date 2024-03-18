@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
@@ -23,6 +23,7 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         AsmType Type { get; }
         string SetName { get; }
+        IReadOnlyList<string> Targets { get; }
 
         /// <summary>Includes all instruction names, including aliases. All aliases point to the same Instruction object.</summary>
         IReadOnlyDictionary<string, Instruction> Instructions { get; }
@@ -32,20 +33,23 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         public AsmType Type { get; }
         public string SetName { get; }
+        public IReadOnlyList<string> Targets { get; }
         public IReadOnlyDictionary<string, Instruction> Instructions => _instructions;
 
         private readonly Dictionary<string, Instruction> _instructions = new Dictionary<string, Instruction>();
 
-        public InstructionSet(AsmType type, string path)
+        public InstructionSet(AsmType type, string setName, IReadOnlyList<string> targets)
         {
             Type = type;
-            SetName = Path.GetFileNameWithoutExtension(path);
+            SetName = setName;
+            Targets = targets;
         }
 
         public InstructionSet(AsmType type, IEnumerable<IInstructionSet> subsets)
         {
             Type = type;
             SetName = "";
+            Targets = Array.Empty<string>();
             foreach (var subset in subsets)
             {
                 foreach (var instruction in subset.Instructions)

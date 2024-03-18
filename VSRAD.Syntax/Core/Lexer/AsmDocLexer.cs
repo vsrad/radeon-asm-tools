@@ -27,10 +27,12 @@ namespace VSRAD.Syntax.Core.Lexer
         private static readonly Dictionary<int, RadAsmTokenType> _tt = new Dictionary<int, RadAsmTokenType>()
         {
             { RadAsmDocLexer.LET, RadAsmTokenType.Keyword },
+            { RadAsmDocLexer.TARGETS, RadAsmTokenType.Keyword },
             { RadAsmDocLexer.COMMA, RadAsmTokenType.Comma },
             { RadAsmDocLexer.LCURVEBRACKET, RadAsmTokenType.LcurveBracket },
             { RadAsmDocLexer.RCURVEBRACKET, RadAsmTokenType.RcurveBracket },
             { RadAsmDocLexer.IDENTIFIER, RadAsmTokenType.Identifier },
+            { RadAsmDocLexer.IDENTIFIER_LIST, RadAsmTokenType.Identifier },
             { RadAsmDocLexer.BLOCK_COMMENT, RadAsmTokenType.Comment },
             { RadAsmDocLexer.WHITESPACE, RadAsmTokenType.Whitespace },
             { RadAsmDocLexer.EOL, RadAsmTokenType.Whitespace },
