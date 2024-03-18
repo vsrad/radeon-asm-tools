@@ -163,7 +163,6 @@
     <Compile Include="Options\Instructions\InstructionListLoader.cs" />
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
     <Compile Include="Options\Instructions\InstructionSet.cs" />
-    <Compile Include="Options\Instructions\InstructionSetSelector.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs">

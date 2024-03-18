@@ -201,6 +201,7 @@
     <Compile Include="ProjectSystem\ActionController.cs" />
     <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointTracker.cs" />
+    <Compile Include="ProjectSystem\SyntaxIntegration.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphFactory.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphTagger.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />

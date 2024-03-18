@@ -174,7 +174,7 @@ namespace VSRAD.Package.ProjectSystem
                 var debugFile = _projectSourceManager.DebugStartupPath ?? activeFile;
                 var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
                 var breakTarget = _breakpointTracker.GetTarget(debugFile, debugBreakTarget);
-                var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, debugFile, _project.Options.TargetProcessor);
+                var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, debugFile, _project.Options.TargetProcessor ?? _project.Options.DefaultTargetProcessor);
                 var actionEnv = new ActionEnvironment(watches, breakTarget);
 
                 var projectProperties = _project.GetProjectProperties();

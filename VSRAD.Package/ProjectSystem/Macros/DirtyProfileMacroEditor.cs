@@ -95,7 +95,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                         {
                             return await _channel.GetRemoteEnvironmentAsync(CancellationToken.None).ConfigureAwait(false);
                         }
-                        catch (ConnectionRefusedException)
+                        catch (ConnectionFailedException)
                         {
                             return new Dictionary<string, string>();
                         }

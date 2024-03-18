@@ -98,24 +98,6 @@ namespace VSRAD.Syntax.Options
             set => _optionsProvider.InstructionsPaths = value;
         }
 
-        [Category("Instructions")]
-        [DisplayName("Asm1 selected set")]
-        [Browsable(false)]
-        public string Asm1InstructionSet
-        {
-            get => _optionsProvider.Asm1InstructionSet;
-            set => _optionsProvider.Asm1InstructionSet = value;
-        }
-
-        [Category("Instructions")]
-        [DisplayName("Asm2 selected set")]
-        [Browsable(false)]
-        public string Asm2InstructionSet
-        {
-            get => _optionsProvider.Asm2InstructionSet;
-            set => _optionsProvider.Asm2InstructionSet = value;
-        }
-
         [Category("Autocompletion")]
         [DisplayName("Instruction auto-completion")]
         [Description("Autocomplete instructions")]

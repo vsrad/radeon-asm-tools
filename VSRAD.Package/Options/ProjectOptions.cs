@@ -36,8 +36,8 @@ namespace VSRAD.Package.Options
         public MruCollection<string> TargetProcessors { get; } =
             new MruCollection<string>();
 
-        [JsonIgnore]
-        public string TargetProcessor { get => TargetProcessors.Count > 0 ? TargetProcessors[0] : DefaultTargetProcessor; set => TargetProcessors.Add(value); }
+        public string TargetProcessor { get; set; }
+
         [JsonIgnore]
         public string DefaultTargetProcessor => Profile?.General?.DefaultTargetProcessor ?? "";
 

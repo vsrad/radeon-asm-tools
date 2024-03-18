@@ -1,25 +1,46 @@
 ﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
     [Export(typeof(ICommandHandler))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
-    public sealed class TargetProcessorDropdownCommand : ICommandHandler
+    public sealed class TargetProcessorDropdownCommand : ICommandHandler, IDisposable
     {
         private readonly IProject _project;
+        private readonly ICommunicationChannel _channel;
+        private readonly ISyntaxIntegration _syntaxIntegration;
+
+        private string _autoSelectedTargetProcessor;
+        private bool _autoSelectedTargetProcessorRequested;
 
         [ImportingConstructor]
-        public TargetProcessorDropdownCommand(IProject project, SVsServiceProvider serviceProvider)
+        public TargetProcessorDropdownCommand(IProject project, ICommunicationChannel channel, ISyntaxIntegration syntaxIntegration)
         {
             _project = project;
+            _channel = channel;
+            _channel.ConnectionStateChanged += RemoteConnectionChanged;
+            _syntaxIntegration = syntaxIntegration;
+            _syntaxIntegration.OnGetSelectedTargetProcessor += GetSelectedTargetProcessor;
+        }
+
+        public void Dispose()
+        {
+            _syntaxIntegration.OnGetSelectedTargetProcessor -= GetSelectedTargetProcessor;
         }
 
         public Guid CommandSet => Constants.TargetProcessorDropdownCommandSet;
@@ -31,20 +52,88 @@ namespace VSRAD.Package.Commands
         {
             if (commandId == Constants.TargetProcessorDropdownListId && variantOut != IntPtr.Zero)
             {
-                var targetProcessorList = _project.Options.TargetProcessors.Prepend(_project.Options.DefaultTargetProcessor).Distinct().Append("Edit...").ToArray();
+                var predefinedTargetProcessors = _syntaxIntegration.GetTargetProcessorList().Select(p => p.TargetProcessor);
+                var targetProcessorList = predefinedTargetProcessors.Prepend("Auto").Distinct().Append("Edit...").ToArray();
                 Marshal.GetNativeVariantForObject(targetProcessorList, variantOut);
             }
             if (commandId == Constants.TargetProcessorDropdownId && variantOut != IntPtr.Zero)
             {
-                Marshal.GetNativeVariantForObject(_project.Options.TargetProcessor, variantOut);
+                string selectedTargetProcessor;
+                if (_project.Options.TargetProcessor != null)
+                {
+                    selectedTargetProcessor = _project.Options.TargetProcessor;
+                }
+                else
+                {
+                    string autoTargetProcessor;
+                    try
+                    {
+                        var cts = new CancellationTokenSource(millisecondsDelay: 300);
+                        autoTargetProcessor = ThreadHelper.JoinableTaskFactory.RunAsync(() => GetAutoTargetProcessorAsync()).Join(cts.Token);
+                    }
+                    catch
+                    {
+                        autoTargetProcessor = null;
+                    }
+                    selectedTargetProcessor = $"Auto ({autoTargetProcessor ?? "Loading..."})";
+                }
+                Marshal.GetNativeVariantForObject(selectedTargetProcessor, variantOut);
             }
             if (commandId == Constants.TargetProcessorDropdownId && variantIn != IntPtr.Zero)
             {
-                var selectedProcessor = (string)Marshal.GetObjectForNativeVariant(variantIn);
-                if (selectedProcessor == "Edit...")
+                var selected = (string)Marshal.GetObjectForNativeVariant(variantIn);
+                if (selected == "Edit...")
                     OpenProcessorListEditor();
+                else if (selected == "Auto")
+                    _project.Options.TargetProcessor = null;
                 else
-                    _project.Options.TargetProcessor = selectedProcessor;
+                    _project.Options.TargetProcessor = selected;
+                _syntaxIntegration.NotifyTargetProcessorChanged();
+            }
+        }
+
+        private void GetSelectedTargetProcessor(object sender, TargetProcessorSelectionEventArgs e)
+        {
+            e.Selection = Task.Run(async () =>
+            {
+                string sel = _project.Options.TargetProcessor ?? (await GetAutoTargetProcessorAsync());
+                return _syntaxIntegration.GetTargetProcessorList().FirstOrDefault(p => p.TargetProcessor == sel);
+            });
+        }
+
+        private async Task<string> GetAutoTargetProcessorAsync()
+        {
+            if (!_autoSelectedTargetProcessorRequested)
+            {
+                try
+                {
+                    var unevaluatedDefaultProcessor = _project.Options.DefaultTargetProcessor;
+                    var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
+                        ? null
+                        : new AsyncLazy<IReadOnlyDictionary<string, string>>(() => _channel.GetRemoteEnvironmentAsync(default), ThreadHelper.JoinableTaskFactory);
+                    var evaluator = new MacroEvaluator(
+                        projectProperties: _project.GetProjectProperties(),
+                        transientValues: new MacroEvaluatorTransientValues(0, "", "", "", "", ""),
+                        remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
+                    var evaluated = await evaluator.EvaluateAsync(unevaluatedDefaultProcessor);
+                    if (!evaluated.TryGetResult(out _autoSelectedTargetProcessor, out _))
+                        _autoSelectedTargetProcessor = null;
+                }
+                catch (ConnectionFailedException)
+                {
+                    _autoSelectedTargetProcessor = null;
+                }
+            }
+            _autoSelectedTargetProcessorRequested = true;
+            return _autoSelectedTargetProcessor;
+        }
+
+        private void RemoteConnectionChanged()
+        {
+            if (_channel.ConnectionState != ClientState.Connected)
+            {
+                _autoSelectedTargetProcessor = null;
+                _autoSelectedTargetProcessorRequested = false;
             }
         }
 
