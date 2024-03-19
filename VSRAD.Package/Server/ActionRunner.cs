@@ -28,20 +28,24 @@ namespace VSRAD.Package.Server
         }
     }
 
+    public interface IActionRunnerCallbacks
+    {
+        void OnNextStepStarted();
+        void OnOpenFileInEditorRequested(string filePath, string lineMarker);
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
-        private readonly SVsServiceProvider _serviceProvider;
-        private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
+        private readonly IActionRunnerCallbacks _callbacks;
         private readonly ActionEnvironment _environment;
-        private readonly IProject _project;
+        private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ActionEnvironment environment, IProject project)
+        public ActionRunner(ICommunicationChannel channel, IActionRunnerCallbacks callbacks, ActionEnvironment environment)
         {
             _channel = channel;
-            _serviceProvider = serviceProvider;
+            _callbacks = callbacks;
             _environment = environment;
-            _project = project;
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>
@@ -57,6 +61,7 @@ namespace VSRAD.Package.Server
             for (int i = 0; i < steps.Count; ++i)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                _callbacks.OnNextStepStarted();
 
                 StepResult result;
                 switch (steps[i])
@@ -93,6 +98,11 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyFileAsync(CopyFileStep step, CancellationToken cancellationToken)
         {
+            // Fast path for RemoteToLocal or LocalToRemote copies that are forced to LocalToLocal copies by the "Run on Localhost" option
+            if (step.Direction == FileCopyDirection.LocalToLocal && step.SourcePath == step.TargetPath)
+            {
+                return new StepResult(true, "", "No files copied. The source and target locations are identical.\r\n");
+            }
             IList<FileMetadata> sourceFiles, targetFiles;
             // List all source files
             if (step.Direction == FileCopyDirection.RemoteToLocal)
@@ -108,7 +118,7 @@ namespace VSRAD.Package.Server
             }
             if (sourceFiles.Count == 0)
             {
-                return new StepResult(false, $"Data is missing. File or directory is not found on the {(step.Direction == FileCopyDirection.RemoteToLocal ? "remote" : "local")} machine at {step.SourcePath}", "");
+                return new StepResult(false, $"File or directory not found. The source path is missing on the {(step.Direction == FileCopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
             }
             // List all target files
             if (step.Direction == FileCopyDirection.LocalToRemote)
@@ -129,7 +139,7 @@ namespace VSRAD.Package.Server
                     return new StepResult(false, $"File cannot be copied. The target path is a directory: {step.SourcePath}", "");
 
                 if (step.IfNotModified == ActionIfNotModified.Fail && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"Data is stale. File was not modified on the {(step.Direction == FileCopyDirection.RemoteToLocal ? "remote" : "local")} machine at {step.SourcePath}", "");
+                    return new StepResult(false, $"File is stale. The source path was not modified on the {(step.Direction == FileCopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
 
                 if (step.IfNotModified == ActionIfNotModified.DoNotCopy
                     && targetFiles.Count == 1
@@ -145,7 +155,7 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles, CancellationToken cancellationToken)
         {
-            /* Retrieve source files */
+            // Retrieve source files
             var files = new List<PackedFile>();
             bool SourceIdenticalToTarget(FileMetadata src)
             {
@@ -168,9 +178,12 @@ namespace VSRAD.Package.Server
                 {
                     var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
                     var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command, cancellationToken);
-
-                    if (response.Status != GetFilesStatus.Successful)
-                        return new StepResult(false, $"Failed to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
+                    if (response.Status == GetFilesStatus.FileNotFound)
+                        return new StepResult(false, $"Failed to read remote directory. No entries found at {step.SourcePath}", "Files requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
+                    if (response.Status == GetFilesStatus.PermissionDenied)
+                        return new StepResult(false, $"Failed to read remote directory. Access is denied to {step.SourcePath}", "Files requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
+                    if (response.Status == GetFilesStatus.OtherIOError)
+                        return new StepResult(false, $"Failed to read remote directory at {step.TargetPath}", "Files requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
 
                     files.AddRange(response.Files);
                 }
@@ -179,47 +192,48 @@ namespace VSRAD.Package.Server
                     files.AddRange(PackedFile.PackFiles(step.SourcePath, filesToGet));
                 }
             }
-            /* Include empty directories */
+            // Include empty directories
             foreach (var src in sourceFiles)
             {
                 // ./ indicates the root directory
                 if (src.IsDirectory && src.RelativePath != "./" && !(step.IfNotModified == ActionIfNotModified.DoNotCopy && SourceIdenticalToTarget(src)))
                     files.Add(new PackedFile(Array.Empty<byte>(), src.RelativePath, src.LastWriteTimeUtc));
             }
-            /* Write source files and directories to the target directory */
+            // Write source files and directories to the target directory
             if (files.Count == 0)
-                return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
-
+            {
+                return new StepResult(true, "", "No files copied. The source and target sizes and modification times are identical.\r\n");
+            }
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command, cancellationToken);
-
                 if (response.Status == PutDirectoryStatus.TargetPathIsFile)
-                    return new StepResult(false, $"Directory cannot be copied. The target path on the remote machine is a file: {step.SourcePath}", "");
+                    return new StepResult(false, $"Failed to copy files to remote directory. The target path is a file: {step.SourcePath}", "");
                 if (response.Status == PutDirectoryStatus.PermissionDenied)
-                    return new StepResult(false, $"Access is denied to remote path {step.TargetPath}", "");
+                    return new StepResult(false, $"Failed to copy files to remote directory. Access is denied to {step.TargetPath}. Make sure that the path is accessible and not marked as read-only.", "");
                 if (response.Status == PutDirectoryStatus.OtherIOError)
-                    return new StepResult(false, $"Cannot copy directory to the remote machine at {step.TargetPath}", "");
+                    return new StepResult(false, $"Failed to copy files to remote directory {step.TargetPath}", "");
             }
             else
             {
                 if (File.Exists(step.TargetPath))
-                    return new StepResult(false, $"Directory cannot be copied. The target path on the local machine is a file: {step.SourcePath}", "");
-
+                {
+                    return new StepResult(false, $"Failed to copy files to local directory. The target path is a file: {step.SourcePath}", "");
+                }
                 try
                 {
                     PackedFile.UnpackFiles(step.TargetPath, files, step.PreserveTimestamps);
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException e)
                 {
-                    return new StepResult(false, $"Access is denied to local file at {step.TargetPath}", "");
+                    return new StepResult(false, $"Failed to copy files to local directory {step.TargetPath}. {e.Message} Make sure that the path is accessible and not marked as read-only.", "");
                 }
-                catch (IOException)
+                catch (IOException e)
                 {
-                    return new StepResult(false, $"Cannot copy directory to the local machine at {step.TargetPath}", "");
+                    return new StepResult(false, $"Failed to copy files to local directory {step.TargetPath}. {e.Message}", "");
                 }
             }
 
@@ -229,13 +243,13 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoCopySingleFileAsync(CopyFileStep step, CancellationToken cancellationToken)
         {
             byte[] sourceContents;
-            /* Read source file */
+            // Read source file
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new FetchResultRange { FilePath = step.SourcePath };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command, cancellationToken);
                 if (response.Status == FetchStatus.FileNotFound)
-                    return new StepResult(false, $"Data is missing. File is not found on the remote machine at {step.SourcePath}", "");
+                    return new StepResult(false, $"File not found. Failed to read remote file {step.SourcePath}", "");
                 sourceContents = response.Data;
             }
             else
@@ -243,18 +257,17 @@ namespace VSRAD.Package.Server
                 if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
                     return new StepResult(false, error, "");
             }
-            /* Write target file */
+            // Write target file
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 ICommand command = new PutFileCommand { FilePath = step.TargetPath, Data = sourceContents };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command, cancellationToken);
-
                 if (response.Status == PutFileStatus.PermissionDenied)
-                    return new StepResult(false, $"Access is denied to remote file at {step.TargetPath}", "");
+                    return new StepResult(false, $"Access denied. Failed to write remote file {step.TargetPath}. Make sure that the path is accessible and not marked as read-only.", "");
                 if (response.Status == PutFileStatus.OtherIOError)
-                    return new StepResult(false, $"Cannot create file on the remote machine at {step.TargetPath}", "");
+                    return new StepResult(false, $"Failed to write remote file {step.TargetPath}", "");
             }
             else
             {
@@ -312,8 +325,7 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, null, step.LineMarker,
-                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
+            _callbacks.OnOpenFileInEditorRequested(step.Path, step.LineMarker);
             return new StepResult(true, "", "");
         }
 
@@ -449,13 +461,16 @@ namespace VSRAD.Package.Server
                 error = "";
                 return true;
             }
-            catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
-            {
-                error = $"File is not found on the local machine at {fullPath}";
-            }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access is denied to local file at {fullPath}";
+                error = $"Access denied. Failed to read local file {fullPath}";
+            }
+            catch (IOException e)
+            {
+                if (e is FileNotFoundException || e is DirectoryNotFoundException)
+                    error = $"File not found. Failed to read local file {fullPath}";
+                else
+                    error = $"Failed to read local file {fullPath}. {e.Message}";
             }
             data = null;
             return false;
@@ -472,7 +487,11 @@ namespace VSRAD.Package.Server
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access is denied to local file at {fullPath}";
+                error = $"Access denied. Failed to write local file {fullPath}. Make sure that the path is accessible and not marked as read-only.";
+            }
+            catch (IOException e)
+            {
+                error = $"Failed to write local file {fullPath}. {e.Message}";
             }
             return false;
         }
@@ -526,15 +545,9 @@ namespace VSRAD.Package.Server
                 metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
                 return true;
             }
-            catch (UnauthorizedAccessException)
+            catch (Exception e) when (e is UnauthorizedAccessException || e is IOException)
             {
-                error = $"Access to a local directory or its contents is denied at {localPath}";
-                metadata = null;
-                return false;
-            }
-            catch (IOException)
-            {
-                error = $"Failed to read a local directory or its contents at {localPath}";
+                error = $"Failed to access metadata for local path {localPath}. {e.Message}";
                 metadata = null;
                 return false;
             }
