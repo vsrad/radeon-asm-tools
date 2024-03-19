@@ -12,9 +12,10 @@ namespace VSRAD.Syntax.Options.Instructions
     public delegate void InstructionsUpdateDelegate(IInstructionListManager sender, AsmType asmType);
     public interface IInstructionListManager
     {
+        event InstructionsUpdateDelegate InstructionsUpdated;
         IInstructionSet GetSelectedInstructionSet(AsmType asmType);
         IInstructionSet GetInstructionSetsUnion(AsmType asmType);
-        event InstructionsUpdateDelegate InstructionsUpdated;
+        IReadOnlyList<IInstructionSet> GetAllInstructionSets(AsmType asmType);
     }
 
     [Export(typeof(IInstructionListManager))]
@@ -73,7 +74,7 @@ namespace VSRAD.Syntax.Options.Instructions
             }
             _radAsm1InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm, _radAsm1InstructionSets);
             _radAsm2InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm2, _radAsm2InstructionSets);
-            CustomThreadHelper.RunOnMainThread(() => InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode));
+            SelectedInstructionSetUpdated(this, new EventArgs());
         }
 
         public IInstructionSet GetSelectedInstructionSet(AsmType asmType)
@@ -93,6 +94,16 @@ namespace VSRAD.Syntax.Options.Instructions
                 case AsmType.RadAsm: return _radAsm1InstructionsSetsUnion;
                 case AsmType.RadAsm2: return _radAsm2InstructionsSetsUnion;
                 default: return new InstructionSet(default, Enumerable.Empty<IInstructionSet>());
+            }
+        }
+
+        public IReadOnlyList<IInstructionSet> GetAllInstructionSets(AsmType asmType)
+        {
+            switch (asmType)
+            {
+                case AsmType.RadAsm: return _radAsm1InstructionSets;
+                case AsmType.RadAsm2: return _radAsm2InstructionSets;
+                default: return Array.Empty<IInstructionSet>();
             }
         }
 

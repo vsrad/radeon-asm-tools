@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
@@ -19,6 +21,7 @@ namespace VSRAD.Syntax.Core.Parser
         private readonly AsmType _asmType;
         private IInstructionSet _selectedInstructionSet;
         private IInstructionSet _unionInstructionSet;
+        private IReadOnlyList<IInstructionSet> _allInstructionSets;
 
         protected AbstractCodeParser(IDocumentFactory documentFactory, IBuiltinInfoProvider builtinInfoProvider, IInstructionListManager instructionListManager, AsmType asmType)
         {
@@ -38,6 +41,7 @@ namespace VSRAD.Syntax.Core.Parser
             {
                 _selectedInstructionSet = sender.GetSelectedInstructionSet(_asmType);
                 _unionInstructionSet = sender.GetInstructionSetsUnion(_asmType);
+                _allInstructionSets = sender.GetAllInstructionSets(_asmType);
             }
         }
 
@@ -116,9 +120,16 @@ namespace VSRAD.Syntax.Core.Parser
             return false;
         }
 
-        protected bool IsInstructionDefinedInOtherInstructionSet(string tokenText)
+        protected bool CheckInstructionDefinedInOtherSetsError(string instruction, out string error)
         {
-            return !_selectedInstructionSet.Instructions.ContainsKey(tokenText) && _unionInstructionSet.Instructions.ContainsKey(tokenText);
+            if (!_selectedInstructionSet.Instructions.ContainsKey(instruction) && _unionInstructionSet.Instructions.ContainsKey(instruction))
+            {
+                var definedIn = _allInstructionSets.Where(s => s.Instructions.ContainsKey(instruction)).Select(s => $"'{s.SetName}'");
+                error = $"Instruction '{instruction}' is not defined in the current instruction set. It is defined in: {string.Join(", ", definedIn)}.";
+                return true;
+            }
+            error = "";
+            return false;
         }
 
         protected bool TryAddBuiltinReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
