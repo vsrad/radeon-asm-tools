@@ -18,6 +18,7 @@ namespace VSRAD.Package.ProjectSystem
         event EventHandler<SelectedTargetProcessorEventArgs> OnGetSelectedTargetProcessor;
         IEnumerable<TargetProcessor> GetPredefinedTargetProcessors();
         void NotifyTargetProcessorChanged();
+        IEnumerable<string> GetSupportedFileExtensionList();
     }
 
     [Export(typeof(ISyntaxIntegration))]
@@ -31,15 +32,25 @@ namespace VSRAD.Package.ProjectSystem
         {
             var args = new TargetProcessorListEventArgs();
             PackageRequestedTargetProcessorList?.Invoke(this, args);
-            var list = args.List ?? Array.Empty<(string, string)>();
+            var list = args.TargetProcessors ?? Array.Empty<(string, string)>();
             return list.OrderBy(t => t).Select(t => new TargetProcessor(t.Processor, t.InstructionSet));
         }
 
-        void ISyntaxIntegration.NotifyTargetProcessorChanged() =>
+        void ISyntaxIntegration.NotifyTargetProcessorChanged()
+        {
             PackageUpdatedSelectedTargetProcessor?.Invoke(this, new EventArgs());
+        }
+
+        IEnumerable<string> ISyntaxIntegration.GetSupportedFileExtensionList()
+        {
+            var args = new FileExtensionListEventArgs();
+            PackageRequestedSupportedFileExtensionList?.Invoke(this, args);
+            return args.FileExtensions ?? Array.Empty<string>();
+        }
         #endregion
 
         #region ISyntaxPackageBridge
+        public event EventHandler<FileExtensionListEventArgs> PackageRequestedSupportedFileExtensionList;
         public event EventHandler<TargetProcessorListEventArgs> PackageRequestedTargetProcessorList;
         public event EventHandler<EventArgs> PackageUpdatedSelectedTargetProcessor;
 

@@ -138,8 +138,12 @@ namespace VSRAD.Syntax.Options.Instructions
         {
             switch (_activeDocumentAsm)
             {
-                case AsmType.RadAsm: e.List = _radAsm1InstructionSets.SelectMany(s => s.Targets.Select(t => (Processor: t, InstructionSet: s.SetName))).ToList(); break;
-                case AsmType.RadAsm2: e.List = _radAsm2InstructionSets.SelectMany(s => s.Targets.Select(t => (Processor: t, InstructionSet: s.SetName))).ToList(); break;
+                case AsmType.RadAsm:
+                    e.TargetProcessors = _radAsm1InstructionSets.SelectMany(s => s.Targets.Select(t => (Processor: t, InstructionSet: s.SetName))).ToList();
+                    break;
+                case AsmType.RadAsm2:
+                    e.TargetProcessors = _radAsm2InstructionSets.SelectMany(s => s.Targets.Select(t => (Processor: t, InstructionSet: s.SetName))).ToList();
+                    break;
             }
         }
     }
