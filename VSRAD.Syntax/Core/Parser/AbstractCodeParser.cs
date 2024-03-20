@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.Core.Parser
             _builtinInfoProvider = builtinInfoProvider;
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
-            InstructionsUpdated(instructionListManager, _asmType);
+            CustomThreadHelper.RunOnMainThread(() => InstructionsUpdated(instructionListManager, _asmType));
         }
 
         public abstract Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
