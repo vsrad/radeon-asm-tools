@@ -33,11 +33,17 @@ namespace VSRAD.Syntax.Options
             IVsEditorAdaptersFactoryService editorAdaptersFactoryService,
             IContentTypeRegistryService contentTypeRegistryService,
             IFileExtensionRegistryService fileExtensionRegistryService,
-            OptionsProvider optionsEventProvider)
+            OptionsProvider optionsEventProvider,
+            [Import(AllowDefault = true)] SyntaxPackageBridge.ISyntaxPackageBridge syntaxPackageBridge)
         {
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
             _fileExtensionRegistryService = fileExtensionRegistryService;
             _dte = (DTE2)serviceProvider.GetService(typeof(DTE));
+
+            if (syntaxPackageBridge != null)
+            {
+                syntaxPackageBridge.PackageRequestedSupportedFileExtensionList += GetSupportedFileExtensionList;
+            }
 
             optionsEventProvider.OptionsUpdated += FileExtensionChanged;
             Asm1ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
@@ -163,6 +169,11 @@ namespace VSRAD.Syntax.Options
                 return;
 
             textBuffer.ChangeContentType(contentType, null);
+        }
+
+        private void GetSupportedFileExtensionList(object sender, SyntaxPackageBridge.FileExtensionListEventArgs e)
+        {
+            e.FileExtensions = _asm1Extensions.Concat(_asm2Extensions).ToList();
         }
     }
 }

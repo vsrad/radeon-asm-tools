@@ -26,11 +26,11 @@ namespace VSRAD.Package.Utils
 
         private bool _promptUnsavedOnClose = true;
 
-        public WpfMruEditor() : this("", Array.Empty<object>())
+        public WpfMruEditor() : this("", "", Array.Empty<object>())
         {
         }
 
-        public WpfMruEditor(string itemHeader, IEnumerable<object> items)
+        public WpfMruEditor(string itemHeader, string helpMessage, IEnumerable<object> items)
         {
             Items = new ObservableCollection<object>(items);
             RemoveItemCommand = new WpfDelegateCommand(RemoveItem);
@@ -38,6 +38,7 @@ namespace VSRAD.Package.Utils
             InitializeComponent();
 
             ItemGrid.Columns[0].Header = itemHeader;
+            HelpMessage.Text = helpMessage;
             Title = $"{itemHeader} Editor";
             ShowInTaskbar = false;
         }
@@ -59,7 +60,7 @@ namespace VSRAD.Package.Utils
 
         private void RemoveItem(object item)
         {
-            var prompt = MessageBox.Show($"Are you sure you want to remove {((dynamic)item).Value}?", "Confirm removal", MessageBoxButton.YesNo);
+            var prompt = MessageBox.Show($"Are you sure you want to remove {((dynamic)item).FormattedValue}?", "Confirm removal", MessageBoxButton.YesNo);
             if (prompt == MessageBoxResult.Yes)
                 Items.Remove(item);
         }

@@ -12,19 +12,11 @@
           <CommandName>ShowHideLineNumber</CommandName>
         </Strings>
       </Menu>
-      <Menu guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorMenu" priority="0x0000" type="Toolbar">
-        <Strings>
-          <ButtonText>Instruction sets</ButtonText>
-        </Strings>
-      </Menu>
     </Menus>
 
     <Groups>
       <Group guid="guidExtensionPackageCmdSet" id="FunctionListGroup" priority="0x0100">
         <Parent guid="guidExtensionPackageCmdSet" id="FunctionListMenu" />
-      </Group>
-      <Group guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorGroup" priority="0x0100">
-        <Parent guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorMenu" />
       </Group>
     </Groups>
 
@@ -68,32 +60,6 @@
         </Strings>
       </Button>
     </Buttons>
-
-    <Combos>
-      <Combo guid="guidInstructionSetSelectorCmdSet" id="cmdidInstructionSetDropDownCombo" priority="0x001" type="DropDownCombo" defaultWidth="55" idCommandList="cmdidInstructionSetDropDownComboGetList">
-        <Parent guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorGroup"/>
-        <Strings>
-          <MenuText>Instruction Set: </MenuText>
-          <ButtonText>Instruction Set</ButtonText>
-          <ToolTipText>Instruction Set</ToolTipText>
-          <CanonicalName>InstructionSetCombo</CanonicalName>
-          <LocCanonicalName>InstructionSetCombo</LocCanonicalName>
-          <CommandName>InstructionSetCombo</CommandName>
-        </Strings>
-      </Combo>
-    
-      <Combo guid="guidInstructionSetSelectorCmdSet" id="cmdidInstructionSetDropDownCombo" priority="0x1000" type="DropDownCombo" defaultWidth="55" idCommandList="cmdidInstructionSetDropDownComboGetList">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
-        <Strings>
-          <MenuText>Instruction Set: </MenuText>
-          <ButtonText>Instruction Set</ButtonText>
-          <ToolTipText>Instruction Set</ToolTipText>
-          <CanonicalName>InstructionSetCombo</CanonicalName>
-          <LocCanonicalName>InstructionSetCombo</LocCanonicalName>
-          <CommandName>InstructionSetCombo</CommandName>
-        </Strings>
-      </Combo>
-    </Combos>
     
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
     <Bitmaps>
@@ -126,14 +92,6 @@
 
     <GuidSymbol name="guidNavigationListCmdSet" value="{0c7aa63d-bc2a-4d0e-83c2-80bbb30a5ceb}">
       <IDSymbol name="cmdidNavigationListCommand" value="0x0203" />
-    </GuidSymbol>
-
-    <!-- Instruction Set selector dropdown -->
-    <GuidSymbol name="guidInstructionSetSelectorCmdSet" value="{82312F5F-22B0-40CD-A5FF-2DFE6383DE72}">
-      <IDSymbol name="cmdidInstructionSetDropDownCombo" value="0x100"/>
-      <IDSymbol name="cmdidInstructionSetDropDownComboGetList" value="0x101"/>
-      <IDSymbol name="instructionSetSelectorMenu" value="0x1000"/>
-      <IDSymbol name="instructionSetSelectorGroup" value="0x1100"/>
     </GuidSymbol>
 
     <!-- VSRAD tool bar menu -->

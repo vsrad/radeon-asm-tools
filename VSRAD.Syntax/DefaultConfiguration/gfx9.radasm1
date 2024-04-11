@@ -1,3 +1,5 @@
+RadAsmTargets { gfx900, gfx906 }
+
 /* 
  * Specifies size of image address components: 16 or 32 bits (32 bits by default). GFX9 and GFX10 only. 
  * 

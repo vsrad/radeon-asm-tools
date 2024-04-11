@@ -1,25 +1,49 @@
 ﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
     [Export(typeof(ICommandHandler))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
-    public sealed class TargetProcessorDropdownCommand : ICommandHandler
+    public sealed class TargetProcessorDropdownCommand : ICommandHandler, IDisposable
     {
         private readonly IProject _project;
+        private readonly ICommunicationChannel _channel;
+        private readonly ISyntaxIntegration _syntaxIntegration;
+
+        private string _autoSelectedTargetProcessor;
+        private bool _autoSelectedTargetProcessorRequested;
+
+        private const string _unionInstructionSetName = "ALL";
 
         [ImportingConstructor]
-        public TargetProcessorDropdownCommand(IProject project, SVsServiceProvider serviceProvider)
+        public TargetProcessorDropdownCommand(IProject project, ICommunicationChannel channel, ISyntaxIntegration syntaxIntegration)
         {
             _project = project;
+            _channel = channel;
+            _channel.ConnectionStateChanged += RemoteConnectionChanged;
+            _syntaxIntegration = syntaxIntegration;
+            _syntaxIntegration.OnGetSelectedTargetProcessor += GetSelectedTargetProcessor;
+        }
+
+        public void Dispose()
+        {
+            _syntaxIntegration.OnGetSelectedTargetProcessor -= GetSelectedTargetProcessor;
         }
 
         public Guid CommandSet => Constants.TargetProcessorDropdownCommandSet;
@@ -31,51 +55,167 @@ namespace VSRAD.Package.Commands
         {
             if (commandId == Constants.TargetProcessorDropdownListId && variantOut != IntPtr.Zero)
             {
-                var targetProcessorList = _project.Options.TargetProcessors.Prepend(_project.Options.DefaultTargetProcessor).Distinct().Append("Edit...").ToArray();
-                Marshal.GetNativeVariantForObject(targetProcessorList, variantOut);
+                var items = EnumerateProcessorSyntaxItems().Select(p => p.FormattedValue).Append("Edit...").ToArray();
+                Marshal.GetNativeVariantForObject(items, variantOut);
             }
             if (commandId == Constants.TargetProcessorDropdownId && variantOut != IntPtr.Zero)
             {
-                Marshal.GetNativeVariantForObject(_project.Options.TargetProcessor, variantOut);
+                string selectedTargetProcessor;
+                if (_project.Options.SelectedTargetProcessor != null)
+                {
+                    selectedTargetProcessor = _project.Options.SelectedTargetProcessor.ToString();
+                }
+                else
+                {
+                    string autoTargetProcessor;
+                    try
+                    {
+                        var cts = new CancellationTokenSource(millisecondsDelay: 300);
+                        autoTargetProcessor = ThreadHelper.JoinableTaskFactory.RunAsync(() => GetAutoTargetProcessorAsync()).Join(cts.Token);
+                    }
+                    catch
+                    {
+                        autoTargetProcessor = null;
+                    }
+                    selectedTargetProcessor = $"Auto ({autoTargetProcessor ?? "Loading..."})";
+                }
+                Marshal.GetNativeVariantForObject(selectedTargetProcessor, variantOut);
             }
             if (commandId == Constants.TargetProcessorDropdownId && variantIn != IntPtr.Zero)
             {
-                var selectedProcessor = (string)Marshal.GetObjectForNativeVariant(variantIn);
-                if (selectedProcessor == "Edit...")
-                    OpenProcessorListEditor();
-                else
-                    _project.Options.TargetProcessor = selectedProcessor;
+                var optionIdx = (int)Marshal.GetObjectForNativeVariant(variantIn);
+                var items = EnumerateProcessorSyntaxItems().ToList();
+                if (optionIdx < items.Count)
+                    _project.Options.SelectedTargetProcessor = items[optionIdx].Value;
+                else // "Edit..."
+                    OpenProcessorSyntaxItemEditor();
+                _syntaxIntegration.NotifyTargetProcessorChanged();
             }
         }
 
-        public sealed class ProcessorItem : DefaultNotifyPropertyChanged
+        private void GetSelectedTargetProcessor(object sender, SelectedTargetProcessorEventArgs e)
         {
-            private string _value = "";
-            public string Value { get => _value; set => SetField(ref _value, value); }
+            e.Selection = Task.Run(async () =>
+            {
+                var predefinedTargets = _syntaxIntegration.GetPredefinedTargetProcessors().ToList();
+
+                var processor = _project.Options.SelectedTargetProcessor?.Processor
+                    ?? await GetAutoTargetProcessorAsync();
+                var instructionSet = _project.Options.SelectedTargetProcessor?.InstructionSet
+                    ?? predefinedTargets.Find(p => string.Equals(p.Processor, processor, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(p.InstructionSet, processor, StringComparison.OrdinalIgnoreCase)).InstructionSet
+                    ?? processor;
+
+                if (string.IsNullOrEmpty(instructionSet) || string.Equals(instructionSet, _unionInstructionSetName, StringComparison.OrdinalIgnoreCase))
+                    instructionSet = null;
+                else if (predefinedTargets.Count > 0 && !predefinedTargets.Exists(t => string.Equals(t.InstructionSet, instructionSet, StringComparison.OrdinalIgnoreCase)))
+                    Errors.ShowWarning($"Instruction set \"{instructionSet}\" is not supported. Syntax highlighting and autocompletion will be limited in this file."
+                        + "\r\n\r\nYou can change the instruction set in the RAD Debug toolbar. Supported instruction sets are: "
+                        + string.Join(", ", predefinedTargets.Select(t => $@"""{t.InstructionSet}""").Append($@"""{_unionInstructionSetName}""").Distinct()) + ".");
+
+                return (processor, instructionSet);
+            });
         }
 
-        private void OpenProcessorListEditor()
+        private async Task<string> GetAutoTargetProcessorAsync()
         {
-            var initProcessorList = _project.Options.TargetProcessors.Count > 0
-                ? _project.Options.TargetProcessors.Select(a => new ProcessorItem { Value = a })
-                : new[] { new ProcessorItem { Value = _project.Options.TargetProcessor } };
-            var editor = new WpfMruEditor("Target Processor", initProcessorList)
+            if (!_autoSelectedTargetProcessorRequested)
             {
-                CreateItem = () => new ProcessorItem { Value = "" },
-                ValidateEditedItem = (_) => true,
+                try
+                {
+                    var unevaluatedDefaultProcessor = _project.Options.Profile.General.DefaultTargetProcessor;
+                    var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
+                        ? null
+                        : new AsyncLazy<IReadOnlyDictionary<string, string>>(() => _channel.GetRemoteEnvironmentAsync(default), ThreadHelper.JoinableTaskFactory);
+                    var evaluator = new MacroEvaluator(
+                        projectProperties: _project.GetProjectProperties(),
+                        transientValues: new MacroEvaluatorTransientValues(0, "", "", "", "", ""),
+                        remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
+                    var evaluated = await evaluator.EvaluateAsync(unevaluatedDefaultProcessor);
+                    if (!evaluated.TryGetResult(out _autoSelectedTargetProcessor, out _))
+                        _autoSelectedTargetProcessor = null;
+                }
+                catch (ConnectionFailedException)
+                {
+                    _autoSelectedTargetProcessor = null;
+                }
+            }
+            _autoSelectedTargetProcessorRequested = true;
+            return _autoSelectedTargetProcessor;
+        }
+
+        private void RemoteConnectionChanged()
+        {
+            if (_channel.ConnectionState != ClientState.Connected)
+            {
+                _autoSelectedTargetProcessor = null;
+                _autoSelectedTargetProcessorRequested = false;
+            }
+        }
+
+        public sealed class ProcessorSyntaxItem : DefaultNotifyPropertyChanged
+        {
+            private TargetProcessor? _value;
+            public TargetProcessor? Value { get => _value; set => SetField(ref _value, value); }
+
+            private string _formattedValue = "";
+            public string FormattedValue { get => _formattedValue; set => SetField(ref _formattedValue, value); }
+
+            private bool _editable;
+            public bool Editable { get => _editable; set => SetField(ref _editable, value); }
+        }
+
+        private IEnumerable<ProcessorSyntaxItem> EnumerateProcessorSyntaxItems()
+        {
+            var auto = new ProcessorSyntaxItem { Value = null, FormattedValue = "Auto", Editable = false };
+            var predefined = _syntaxIntegration.GetPredefinedTargetProcessors()
+                .Select(p => new ProcessorSyntaxItem { Value = p, FormattedValue = p.ToString(), Editable = false });
+            var user = _project.Options.UserTargetProcessors
+                .Select(p => new ProcessorSyntaxItem { Value = p, FormattedValue = p.ToString(), Editable = true });
+            return predefined.Concat(user).Prepend(auto);
+        }
+
+        private void OpenProcessorSyntaxItemEditor()
+        {
+            var initProcessorSyntaxList = EnumerateProcessorSyntaxItems();
+            var helpMessage = $@"Syntax examples:
+1) ""gfx9"" is equivalent to ""gfx9 (gfx9)"";
+2) ""gfx906 (gfx9)"" targets ""gfx906"", uses the ""gfx9"" instruction set for IntelliSense;
+3) ""gfx906 ({_unionInstructionSetName})"" targets ""gfx906"", uses a union of all instruction sets for IntelliSense.";
+            var editor = new WpfMruEditor("Target Processor (Syntax)", helpMessage, initProcessorSyntaxList)
+            {
+                CreateItem = () => new ProcessorSyntaxItem { FormattedValue = "", Editable = true },
+                ValidateEditedItem = (item) =>
+                {
+                    if (item is ProcessorSyntaxItem i && i.Editable)
+                    {
+                        if (string.IsNullOrEmpty(i.FormattedValue))
+                            return false;
+
+                        i.Value = new TargetProcessor(i.FormattedValue);
+                    }
+                    return true;
+                },
                 CheckHaveUnsavedChanges = (items) =>
                 {
-                    if (items.Count != _project.Options.TargetProcessors.Count)
+                    var customProcessors = items.Where(item => ((ProcessorSyntaxItem)item).Editable).Select(item => ((ProcessorSyntaxItem)item).Value).ToList();
+                    if (customProcessors.Count != _project.Options.UserTargetProcessors.Count)
                         return true;
-                    for (int i = 0; i < items.Count; ++i)
-                        if (((ProcessorItem)items[i]).Value != _project.Options.TargetProcessors[i])
+                    for (int i = 0; i < customProcessors.Count; ++i)
+                    {
+                        if (customProcessors[i] != _project.Options.UserTargetProcessors[i])
                             return true;
+                    }
                     return false;
                 },
                 SaveChanges = (items) =>
                 {
-                    _project.Options.TargetProcessors.Clear();
-                    _project.Options.TargetProcessors.AddRange(items.Select(a => ((ProcessorItem)a).Value).Distinct());
+                    _project.Options.UserTargetProcessors.Clear();
+                    foreach (ProcessorSyntaxItem item in items)
+                    {
+                        if (item.Editable && item.Value is TargetProcessor p && !string.IsNullOrEmpty(p.Processor))
+                            _project.Options.UserTargetProcessors.Add(p);
+                    }
                     _project.SaveOptions();
                 }
             };

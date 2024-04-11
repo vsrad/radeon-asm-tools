@@ -51,7 +51,6 @@ namespace VSRAD.Syntax
             ClearSearchFieldCommand.Initialize(this, commandService);
             SelectItemCommand.Initialize(this, commandService);
             ShowHideLineNumberCommand.Initialize(this, commandService);
-            InstructionSetSelector.Initialize(this, commandService);
         }
     }
 }

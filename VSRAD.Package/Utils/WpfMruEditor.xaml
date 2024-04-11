@@ -5,7 +5,7 @@
                          xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
                          xmlns:platformui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
                          x:Class="VSRAD.Package.Utils.WpfMruEditor"
-                         x:Name="Root" mc:Ignorable="d" Height="450" Width="300" MinHeight="150" MinWidth="200"
+                         x:Name="Root" mc:Ignorable="d" Height="500" Width="300" MinHeight="300" MinWidth="300"
                          Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                          Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
     <platformui:DialogWindow.Resources>
@@ -16,12 +16,13 @@
             <Button Content="OK" Click="HandleOK" Width="61" Height="22" />
             <Button Content="Cancel" IsCancel="True" Click="HandleCancel" Width="61" Height="22" Margin="4,0,0,0" />
         </StackPanel>
-        <DataGrid x:Name="ItemGrid" ItemsSource="{Binding Items, ElementName=Root}" Margin="4" GridLinesVisibility="None" Focusable="True"
+        <TextBlock x:Name="HelpMessage" TextWrapping="Wrap" DockPanel.Dock="Bottom" Margin="4" />
+        <DataGrid x:Name="ItemGrid" ItemsSource="{Binding Items, ElementName=Root}" Margin="4" GridLinesVisibility="None" Focusable="True" DockPanel.Dock="Top"
                   RowEditEnding="ValidateItemAfterEdit" PreviewKeyDown="HandleDeleteKey"
                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="24">
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="*">
+                <DataGridTextColumn Binding="{Binding FormattedValue, UpdateSourceTrigger=PropertyChanged}" Width="*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -33,6 +34,7 @@
                             <Setter Property="VerticalContentAlignment" Value="Center" />
                             <Setter Property="Padding" Value="3,0" />
                             <Setter Property="Height" Value="22" />
+                            <Setter Property="IsEnabled" Value="{Binding Editable, Mode=OneWay, FallbackValue=True}" />
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
@@ -43,6 +45,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Button Content="❌" ToolTip="Remove" Width="22" Height="22" HorizontalAlignment="Center"
+                                    IsEnabled="{Binding Editable, Mode=OneWay, FallbackValue=True}"
                                     Command="{Binding RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

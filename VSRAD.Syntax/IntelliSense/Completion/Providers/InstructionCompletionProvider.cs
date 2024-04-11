@@ -28,7 +28,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             _autocompleteAliases = optionsProvider.AutocompleteInstructionAliases;
             _instructionListManager = instructionListManager;
             _instructionListManager.InstructionsUpdated += InstructionsUpdated;
-            InstructionsUpdated(_instructionListManager, AsmType.RadAsmCode);
+            CustomThreadHelper.RunOnMainThread(() => InstructionsUpdated(_instructionListManager, AsmType.RadAsmCode));
         }
 
         public override void DisplayOptionsUpdated(OptionsProvider sender)

@@ -94,12 +94,12 @@
     <Compile Include="Core\Parser\Asm1Parser.cs" />
     <Compile Include="Core\Parser\IParser.cs" />
     <Compile Include="Core\Parser\DefinitionContainer.cs" />
-    <Compile Include="Core\Parser\ErrorMessages.cs" />
     <Compile Include="Core\Parser\ParserResult.cs" />
     <Compile Include="Core\RescanReason.cs" />
     <Compile Include="Core\TokenizerResult.cs" />
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\DefinitionToken.cs" />
+    <Compile Include="Core\Tokens\DocTargetListToken.cs" />
     <Compile Include="Core\Tokens\ErrorToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />
@@ -163,7 +163,6 @@
     <Compile Include="Options\Instructions\InstructionListLoader.cs" />
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
     <Compile Include="Options\Instructions\InstructionSet.cs" />
-    <Compile Include="Options\Instructions\InstructionSetSelector.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs">
@@ -303,6 +302,10 @@
     <VSIXSourceItem Include="DefaultConfiguration\**" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\VSRAD.SyntaxPackageBridge\VSRAD.SyntaxPackageBridge.csproj">
+      <Project>{3443160f-4d33-401f-8886-5c4218df6bdc}</Project>
+      <Name>VSRAD.SyntaxPackageBridge</Name>
+    </ProjectReference>
     <ProjectReference Include="..\VSRAD.SyntaxParser\VSRAD.SyntaxParser.csproj">
       <Project>{ccc917d5-5dd9-4e11-a5b3-9204e8fdc408}</Project>
       <Name>VSRAD.SyntaxParser</Name>

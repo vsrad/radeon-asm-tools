@@ -33,24 +33,23 @@ namespace VSRAD.Package.Server
         void ForceDisconnect();
     }
 
-    public sealed class ConnectionRefusedException : UserException
+    public class ConnectionFailedException : UserException
     {
-        public ConnectionRefusedException(ServerConnectionOptions connection) :
-            base($"Unable to establish connection to a debug server at {connection}")
-        { }
+        public ConnectionFailedException(ServerConnectionOptions connection) : base($"Failed to connect to the debug server at {connection}") { }
+        public ConnectionFailedException(string message) : base(message) { }
     }
 
-    public sealed class UnsupportedServerVersionException : UserException
+    public sealed class UnsupportedServerVersionException : ConnectionFailedException
     {
         public UnsupportedServerVersionException(ServerConnectionOptions connection, Version serverVersion) :
-            base($"The debug server on host {connection} is out of date and missing critical features. Please update it to the {serverVersion} or above version.")
+            base($"The debug server at {connection} is out of date and missing critical features. Please update it to the {serverVersion} or above version.")
         { }
     }
 
-    public sealed class UnsupportedExtensionVersionException : UserException
+    public sealed class UnsupportedExtensionVersionException : ConnectionFailedException
     {
         public UnsupportedExtensionVersionException(ServerConnectionOptions connection, Version serverVersion) :
-            base($"This extension is out of date and missing critical features to work with the debug server on host {connection}. Please update the extension to the {serverVersion} or above version.")
+            base($"This extension is out of date and missing critical features to work with the debug server at {connection}. Please update the extension to the {serverVersion} or above version.")
         { }
     }
 
@@ -136,7 +135,7 @@ namespace VSRAD.Package.Server
             {
                 throw new OperationCanceledException();
             }
-            catch (Exception e) when (!(e is UnsupportedServerVersionException || e is UnsupportedExtensionVersionException))
+            catch (Exception e) when (!(e is ConnectionFailedException))
             {
                 ForceDisconnect(); // At this point, the stream may be corrupted while we are still connected (e.g. in case of EndOfStreamException), so close the connection first
                 if (reconnectOnError)
@@ -197,7 +196,7 @@ namespace VSRAD.Package.Server
             {
                 client.Dispose();
                 ConnectionState = ClientState.Disconnected;
-                throw new ConnectionRefusedException(ConnectionOptions);
+                throw new ConnectionFailedException(ConnectionOptions);
             }
 
             try

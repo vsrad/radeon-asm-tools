@@ -18,15 +18,17 @@ namespace VSRAD.Package.Commands
     {
         private readonly IProject _project;
         private readonly IProjectSourceManager _projectSourceManager;
+        private readonly ISyntaxIntegration _syntaxIntegration;
 
         private List<string> _openDocumentPaths;
         private List<string> _openDocumentShortNames;
 
         [ImportingConstructor]
-        public DebugMenuCommand(IProject project, IProjectSourceManager projectSourceManager)
+        public DebugMenuCommand(IProject project, IProjectSourceManager projectSourceManager, ISyntaxIntegration syntaxIntegration)
         {
             _project = project;
             _projectSourceManager = projectSourceManager;
+            _syntaxIntegration = syntaxIntegration;
         }
 
         public Guid CommandSet => Constants.DebugMenuCommandSet;
@@ -95,26 +97,13 @@ namespace VSRAD.Package.Commands
 
         private List<string> GetStartupFileCandidates()
         {
-            string[] asmFileExtensions;
-            try
-            {
-                const string syntaxOptsProvider = "VSRAD.Syntax.Options.OptionsProvider";
-                var syntaxOptsImport = new ImportDefinition(syntaxOptsProvider, ImportCardinality.ExactlyOne, new Dictionary<string, object>(), new List<IImportSatisfiabilityConstraint>());
-                var syntaxOptsImported = _project.UnconfiguredProject.Services.ExportProvider.GetExports(syntaxOptsImport);
-                var syntaxOpts = syntaxOptsImported.First().Value;
-                var asm1FileExtensions = (IEnumerable<string>)syntaxOpts.GetType().GetField("Asm1FileExtensions").GetValue(syntaxOpts);
-                var asm2FileExtensions = (IEnumerable<string>)syntaxOpts.GetType().GetField("Asm2FileExtensions").GetValue(syntaxOpts);
-                asmFileExtensions = asm1FileExtensions.Concat(asm2FileExtensions).ToArray();
-            }
-            catch
-            {
-                asmFileExtensions = null;
-            }
-
             var openDocuments = _projectSourceManager.GetOpenDocuments().ToList();
             openDocuments.Sort();
-            if (asmFileExtensions != null)
+
+            var asmFileExtensions = _syntaxIntegration.GetSupportedFileExtensionList().ToList();
+            if (asmFileExtensions.Count > 0)
                 openDocuments.RemoveAll(p => !asmFileExtensions.Any(ext => p.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+
             return openDocuments;
         }
 
