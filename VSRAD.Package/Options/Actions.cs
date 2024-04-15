@@ -79,6 +79,12 @@ namespace VSRAD.Package.Options
         RemoteToLocal, LocalToRemote, LocalToLocal
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum ActionCondition
+    {
+        Always, IfEqual, IfNotEqual
+    }
+
     public static class ActionExtensions
     {
         public static bool IsRemote(this BuiltinActionFile file) =>
@@ -304,20 +310,38 @@ namespace VSRAD.Package.Options
         private string _name = "";
         public string Name { get => _name; set => SetField(ref _name, value); }
 
+        private ActionCondition _condition;
+        public ActionCondition Condition { get => _condition; set => SetField(ref _condition, value); }
+
+        private string _conditionLhs = "";
+        public string ConditionLhs { get => _conditionLhs; set => SetField(ref _conditionLhs, value); }
+
+        private string _conditionRhs = "";
+        public string ConditionRhs { get => _conditionRhs; set => SetField(ref _conditionRhs, value); }
+
+        [JsonIgnore]
+        public bool EvaluatedCondition { get; }
+
         [JsonIgnore]
         public List<IActionStep> EvaluatedSteps { get; }
 
-        public RunActionStep() : this(null) { }
+        public RunActionStep() : this(false, null) { }
 
-        public RunActionStep(List<IActionStep> evaluatedSteps)
+        public RunActionStep(bool evaluatedCondition, List<IActionStep> evaluatedSteps)
         {
+            EvaluatedCondition = evaluatedCondition;
             EvaluatedSteps = evaluatedSteps;
         }
 
         public override string ToString() =>
-            string.IsNullOrWhiteSpace(Name) ? "Run Action" : $"Run {Name}";
+            string.IsNullOrWhiteSpace(Name) ? "Run Action" : $"Run {Name}" + (Condition == ActionCondition.Always ? "" : " (Conditional)");
 
-        public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
+        public override bool Equals(object obj) =>
+            obj is RunActionStep step &&
+            Name == step.Name &&
+            Condition == step.Condition &&
+            ConditionLhs == step.ConditionLhs &&
+            ConditionRhs == step.ConditionRhs;
 
         public override int GetHashCode() => 7;
 
@@ -335,6 +359,23 @@ namespace VSRAD.Package.Options
             if (action == null)
                 return EvaluationError(actionStack.Last(), "Run Action", $"Action \"{Name}\" is not found");
 
+            var condLhsResult = await evaluator.EvaluateAsync(ConditionLhs);
+            if (!condLhsResult.TryGetResult(out var evaluatedCondLhs, out var error))
+                return EvaluationError(actionStack.Last(), "Run Action", error.Message);
+            var condRhsResult = await evaluator.EvaluateAsync(ConditionRhs);
+            if (!condRhsResult.TryGetResult(out var evaluatedCondRhs, out error))
+                return EvaluationError(actionStack.Last(), "Run Action", error.Message);
+
+            bool evaluatedCondition;
+            if (Condition == ActionCondition.Always)
+                evaluatedCondition = true;
+            else if (Condition == ActionCondition.IfEqual)
+                evaluatedCondition = string.Equals(evaluatedCondLhs, evaluatedCondRhs, StringComparison.Ordinal);
+            else if (Condition == ActionCondition.IfNotEqual)
+                evaluatedCondition = !string.Equals(evaluatedCondLhs, evaluatedCondRhs, StringComparison.Ordinal);
+            else
+                throw new NotImplementedException();
+
             var evaluatedSteps = new List<IActionStep>();
             foreach (var step in action.Steps)
             {
@@ -343,12 +384,12 @@ namespace VSRAD.Package.Options
                     evalResult = await runAction.EvaluateAsync(evaluator, transients, actionStack.Append(Name));
                 else
                     evalResult = await step.EvaluateAsync(evaluator, transients, Name);
-                if (!evalResult.TryGetResult(out var evaluated, out var error))
+                if (!evalResult.TryGetResult(out var evaluated, out error))
                     return NestedEvaluationError(actionStack.Last(), error);
 
                 evaluatedSteps.Add(evaluated);
             }
-            return new RunActionStep(evaluatedSteps) { Name = Name };
+            return new RunActionStep(evaluatedCondition, evaluatedSteps) { Name = Name, Condition = Condition, ConditionLhs = evaluatedCondLhs, ConditionRhs = evaluatedCondRhs };
         }
     }
 

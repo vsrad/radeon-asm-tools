@@ -22,9 +22,14 @@
                 <x:Type TypeName="opts:StepEnvironment"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
-        <ObjectDataProvider x:Key="FileCopyDirections" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+        <ObjectDataProvider x:Key="CopyDirections" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="opts:CopyDirection"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="ActionConditions" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="opts:ActionCondition"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
@@ -121,7 +126,7 @@
                 </ListBox.Template>
             </ListView>
         </Border>
-        <Border Margin="0,8,0,0" Height="Auto" MinHeight="190" Padding="4" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1">
+        <Border Margin="0,8,0,0" Height="Auto" MinHeight="200" Padding="4" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1">
             <ContentControl x:Name="StepEditor">
                 <Binding Path="SelectedStep">
                     <Binding.TargetNullValue>
@@ -152,7 +157,7 @@
                             </Grid.RowDefinitions>
                             <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
-                                <ComboBox ItemsSource="{Binding Source={StaticResource FileCopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
+                                <ComboBox ItemsSource="{Binding Source={StaticResource CopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
                                           Height="22" Width="160" HorizontalAlignment="Left"/>
                                 <TextBlock Margin="4,0" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"
                                            Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
@@ -279,6 +284,16 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:RunActionStep}">
                         <Grid>
+                            <Grid.Resources>
+                                <Style TargetType="{x:Type FrameworkElement}" x:Key="DisableWhenUnconditional">
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Condition}" Value="{x:Static opts:ActionCondition.Always}">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Resources>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="173"/>
                                 <ColumnDefinition Width="*"/>
@@ -286,10 +301,29 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Action:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <ComboBox ItemsSource="{Binding DataContext.RunActionNames, ElementName=Root, Mode=OneWay}"
                                       SelectedItem="{Binding Name, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+
+                            <Label Content="Condition:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <ComboBox ItemsSource="{Binding Source={StaticResource ActionConditions}}" SelectedItem="{Binding Condition, Mode=TwoWay}"
+                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="1" Grid.Column="1"/>
+
+                            <Label Content="Condition Left-Hand Side:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                            <TextBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" Style="{StaticResource DisableWhenUnconditional}"
+                                     Text="{Binding ConditionLhs, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2" Style="{StaticResource DisableWhenUnconditional}"
+                                    Tag="ConditionLhs" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Condition Right-Hand Side:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <TextBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" Style="{StaticResource DisableWhenUnconditional}"
+                                     Text="{Binding ConditionRhs, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2" Style="{StaticResource DisableWhenUnconditional}"
+                                    Tag="ConditionRhs" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
                         </Grid>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:WriteDebugTargetStep}">

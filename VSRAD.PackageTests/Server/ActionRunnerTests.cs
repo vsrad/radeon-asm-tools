@@ -432,11 +432,12 @@ namespace VSRAD.PackageTests.Server
             var level2Steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
-                new RunActionStep(level3Steps) { Name = "level3" }
+                new RunActionStep(true, level3Steps) { Name = "level3" }
             };
             var level1Steps = new List<IActionStep>
             {
-                new RunActionStep(level2Steps) { Name = "level2" },
+                new RunActionStep(true, level2Steps) { Name = "level2" },
+                new RunActionStep(false, level3Steps) { Name = "repeat-level3 (skip)" },
                 new CopyStep { Direction = CopyDirection.RemoteToLocal, SkipIfNotModified = false, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             // 1. Level 2 Execute
@@ -470,9 +471,10 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal("Captured stdout (exit code 0):\r\nlevel2\r\n", result.StepResults[0].SubAction.StepResults[0].Log);
             Assert.Equal("level3", result.StepResults[0].SubAction.StepResults[1].SubAction.ActionName);
             Assert.Equal("Captured stdout (exit code 0):\r\nlevel3\r\n", result.StepResults[0].SubAction.StepResults[1].SubAction.StepResults[0].Log);
+            Assert.Equal("Action skipped. The action run condition evaluated to false.", result.StepResults[1].Log);
             Assert.Null(result.StepResults[1].SubAction);
+            Assert.Null(result.StepResults[2].SubAction);
         }
-
 
         [Fact]
         public async Task WriteDebugTargetStepTestAsync()

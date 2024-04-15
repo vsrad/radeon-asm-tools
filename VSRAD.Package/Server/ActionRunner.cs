@@ -255,8 +255,15 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError, CancellationToken cancellationToken)
         {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError, cancellationToken);
-            return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
+            if (step.EvaluatedCondition)
+            {
+                var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError, cancellationToken);
+                return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
+            }
+            else
+            {
+                return new StepResult(true, "", "Action skipped. The action run condition evaluated to false.");
+            }
         }
 
         private Task<StepResult> DoWriteDebugTargetAsync(WriteDebugTargetStep step)

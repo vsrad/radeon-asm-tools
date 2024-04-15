@@ -19,7 +19,7 @@ namespace VSRAD.PackageTests.Server
         private static IMacroEvaluator MakeEvaluator(string unevaluated, string result)
         {
             var mock = new Mock<IMacroEvaluator>();
-            mock.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult<Result<string>>(s == unevaluated ? result : unevaluated));
+            mock.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult<Result<string>>(s == unevaluated ? result : s));
             return mock.Object;
         }
 
@@ -172,7 +172,7 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task RunActionNoActionTestAsync()
+        public async Task RunActionStepNoActionTestAsync()
         {
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
@@ -191,7 +191,7 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task RunActionUnconfiguredReferenceTestAsync()
+        public async Task RunActionStepUnconfiguredReferenceTestAsync()
         {
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
@@ -209,6 +209,28 @@ namespace VSRAD.PackageTests.Server
             Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out error));
             Assert.Equal(@"Copy step failed in ""C"" <- ""B""", error.Title);
             Assert.Equal(@"The source path evaluates to an empty string", error.Message);
+        }
+
+        [Fact]
+        public async Task RunActionStepConditionTestAsync()
+        {
+            var a = new ActionProfileOptions { Name = "A" };
+            var b = new ActionProfileOptions { Name = "B" };
+            b.Steps.Add(new RunActionStep { Name = "A", Condition = ActionCondition.Always });
+            b.Steps.Add(new RunActionStep { Name = "A", Condition = ActionCondition.IfEqual, ConditionLhs = "$(TestMacro)", ConditionRhs = "abc" });
+            b.Steps.Add(new RunActionStep { Name = "A", Condition = ActionCondition.IfNotEqual, ConditionLhs = "$(TestMacro)", ConditionRhs = "abc" });
+
+            var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a, b });
+
+            Assert.True((await b.EvaluateAsync(MakeEvaluator("$(TestMacro)", "abc"), transients)).TryGetResult(out var result, out _));
+            Assert.True(((RunActionStep)result.Steps[0]).EvaluatedCondition);
+            Assert.True(((RunActionStep)result.Steps[1]).EvaluatedCondition);
+            Assert.False(((RunActionStep)result.Steps[2]).EvaluatedCondition);
+
+            Assert.True((await b.EvaluateAsync(MakeEvaluator("$(TestMacro)", "def"), transients)).TryGetResult(out result, out _));
+            Assert.True(((RunActionStep)result.Steps[0]).EvaluatedCondition);
+            Assert.False(((RunActionStep)result.Steps[1]).EvaluatedCondition);
+            Assert.True(((RunActionStep)result.Steps[2]).EvaluatedCondition);
         }
 
         [Fact]
