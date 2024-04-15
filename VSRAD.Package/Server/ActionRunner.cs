@@ -66,7 +66,7 @@ namespace VSRAD.Package.Server
                 StepResult result;
                 switch (steps[i])
                 {
-                    case CopyFileStep copyFile:
+                    case CopyStep copyFile:
                         result = await DoCopyFileAsync(copyFile, cancellationToken);
                         break;
                     case ExecuteStep execute:
@@ -96,16 +96,16 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step, CancellationToken cancellationToken)
+        private async Task<StepResult> DoCopyFileAsync(CopyStep step, CancellationToken cancellationToken)
         {
             // Fast path for RemoteToLocal or LocalToRemote copies that are forced to LocalToLocal copies by the "Run on Localhost" option
-            if (step.Direction == FileCopyDirection.LocalToLocal && step.SourcePath == step.TargetPath)
+            if (step.Direction == CopyDirection.LocalToLocal && step.SourcePath == step.TargetPath)
             {
                 return new StepResult(true, "", "No files copied. The source and target locations are identical.\r\n");
             }
             IList<FileMetadata> sourceFiles, targetFiles;
             // List all source files
-            if (step.Direction == FileCopyDirection.RemoteToLocal)
+            if (step.Direction == CopyDirection.RemoteToLocal)
             {
                 var command = new ListFilesCommand { Path = step.SourcePath, IncludeSubdirectories = step.IncludeSubdirectories };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, cancellationToken);
@@ -118,10 +118,10 @@ namespace VSRAD.Package.Server
             }
             if (sourceFiles.Count == 0)
             {
-                return new StepResult(false, $"File or directory not found. The source path is missing on the {(step.Direction == FileCopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
+                return new StepResult(false, $"File or directory not found. The source path is missing on the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
             }
             // List all target files
-            if (step.Direction == FileCopyDirection.LocalToRemote)
+            if (step.Direction == CopyDirection.LocalToRemote)
             {
                 var command = new ListFilesCommand { Path = step.TargetPath, IncludeSubdirectories = step.IncludeSubdirectories };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, cancellationToken);
@@ -139,7 +139,7 @@ namespace VSRAD.Package.Server
                     return new StepResult(false, $"File cannot be copied. The target path is a directory: {step.SourcePath}", "");
 
                 if (step.IfNotModified == ActionIfNotModified.Fail && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"File is stale. The source path was not modified on the {(step.Direction == FileCopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
+                    return new StepResult(false, $"File is stale. The source path was not modified on the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
 
                 if (step.IfNotModified == ActionIfNotModified.DoNotCopy
                     && targetFiles.Count == 1
@@ -153,7 +153,7 @@ namespace VSRAD.Package.Server
             return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles, cancellationToken);
         }
 
-        private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles, CancellationToken cancellationToken)
+        private async Task<StepResult> DoCopyDirectoryAsync(CopyStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles, CancellationToken cancellationToken)
         {
             // Retrieve source files
             var files = new List<PackedFile>();
@@ -174,7 +174,7 @@ namespace VSRAD.Package.Server
             }
             if (filesToGet.Count > 0)
             {
-                if (step.Direction == FileCopyDirection.RemoteToLocal)
+                if (step.Direction == CopyDirection.RemoteToLocal)
                 {
                     var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
                     var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command, cancellationToken);
@@ -204,7 +204,7 @@ namespace VSRAD.Package.Server
             {
                 return new StepResult(true, "", "No files copied. The source and target sizes and modification times are identical.\r\n");
             }
-            if (step.Direction == FileCopyDirection.LocalToRemote)
+            if (step.Direction == CopyDirection.LocalToRemote)
             {
                 ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
                 if (step.UseCompression)
@@ -240,11 +240,11 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
-        private async Task<StepResult> DoCopySingleFileAsync(CopyFileStep step, CancellationToken cancellationToken)
+        private async Task<StepResult> DoCopySingleFileAsync(CopyStep step, CancellationToken cancellationToken)
         {
             byte[] sourceContents;
             // Read source file
-            if (step.Direction == FileCopyDirection.RemoteToLocal)
+            if (step.Direction == CopyDirection.RemoteToLocal)
             {
                 var command = new FetchResultRange { FilePath = step.SourcePath };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command, cancellationToken);
@@ -258,7 +258,7 @@ namespace VSRAD.Package.Server
                     return new StepResult(false, error, "");
             }
             // Write target file
-            if (step.Direction == FileCopyDirection.LocalToRemote)
+            if (step.Direction == CopyDirection.LocalToRemote)
             {
                 ICommand command = new PutFileCommand { FilePath = step.TargetPath, Data = sourceContents };
                 if (step.UseCompression)
@@ -500,9 +500,9 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
-                if (step is CopyFileStep copyFile && copyFile.IfNotModified == ActionIfNotModified.Fail)
+                if (step is CopyStep copyFile && copyFile.IfNotModified == ActionIfNotModified.Fail)
                 {
-                    if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
+                    if (copyFile.Direction == CopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
                             new FetchMetadata { FilePath = copyFile.SourcePath }, cancellationToken)).Timestamp;
                     else

@@ -74,7 +74,7 @@ namespace VSRAD.Package.Options
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum FileCopyDirection
+    public enum CopyDirection
     {
         RemoteToLocal, LocalToRemote, LocalToLocal
     }
@@ -97,10 +97,10 @@ namespace VSRAD.Package.Options
             new Error(childError.Message, title: childError.Title + " <- " + $"\"{parentAction}\"");
     }
 
-    public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
+    public sealed class CopyStep : DefaultNotifyPropertyChanged, IActionStep
     {
-        private FileCopyDirection _direction;
-        public FileCopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
+        private CopyDirection _direction;
+        public CopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
 
         private string _sourcePath = "";
         public string SourcePath { get => _sourcePath; set => SetField(ref _sourcePath, value); }
@@ -123,17 +123,17 @@ namespace VSRAD.Package.Options
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
-                return "Copy File/Directory";
+                return "Copy";
 
-            var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote"
-                    : Direction == FileCopyDirection.RemoteToLocal ? "from Remote"
+            var dir = Direction == CopyDirection.LocalToRemote ? "to Remote"
+                    : Direction == CopyDirection.RemoteToLocal ? "from Remote"
                     : "Local";
 
             return $"Copy {dir} {SourcePath} -> {TargetPath}";
         }
 
         public override bool Equals(object obj) =>
-            obj is CopyFileStep step &&
+            obj is CopyStep step &&
             SourcePath == step.SourcePath &&
             TargetPath == step.TargetPath &&
             IfNotModified == step.IfNotModified &&
@@ -146,32 +146,32 @@ namespace VSRAD.Package.Options
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
         {
             if (string.IsNullOrWhiteSpace(SourcePath))
-                return EvaluationError(sourceAction, "Copy File", "No source path specified");
+                return EvaluationError(sourceAction, "Copy", "No source path specified");
             if (string.IsNullOrWhiteSpace(TargetPath))
-                return EvaluationError(sourceAction, "Copy File", "No target path specified");
+                return EvaluationError(sourceAction, "Copy", "No target path specified");
 
             var sourcePathResult = await evaluator.EvaluateAsync(SourcePath);
             if (!sourcePathResult.TryGetResult(out var evaluatedSourcePath, out var error))
-                return EvaluationError(sourceAction, "Copy File", error.Message);
+                return EvaluationError(sourceAction, "Copy", error.Message);
             var targetPathResult = await evaluator.EvaluateAsync(TargetPath);
             if (!targetPathResult.TryGetResult(out var evaluatedTargetPath, out error))
-                return EvaluationError(sourceAction, "Copy File", error.Message);
+                return EvaluationError(sourceAction, "Copy", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedSourcePath))
-                return EvaluationError(sourceAction, "Copy File", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
+                return EvaluationError(sourceAction, "Copy", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
             if (string.IsNullOrWhiteSpace(evaluatedTargetPath))
-                return EvaluationError(sourceAction, "Copy File", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
+                return EvaluationError(sourceAction, "Copy", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
 
-            var direction = transients.RunActionsLocally ? FileCopyDirection.LocalToLocal : Direction;
+            var direction = transients.RunActionsLocally ? CopyDirection.LocalToLocal : Direction;
 
-            var sourceLocation = direction == FileCopyDirection.RemoteToLocal ? StepEnvironment.Remote : StepEnvironment.Local;
-            var targetLocation = direction == FileCopyDirection.LocalToRemote ? StepEnvironment.Remote : StepEnvironment.Local;
+            var sourceLocation = direction == CopyDirection.RemoteToLocal ? StepEnvironment.Remote : StepEnvironment.Local;
+            var targetLocation = direction == CopyDirection.LocalToRemote ? StepEnvironment.Remote : StepEnvironment.Local;
             if (!transients.ResolveFullPath(evaluatedSourcePath, sourceLocation).TryGetResult(out evaluatedSourcePath, out error))
-                return EvaluationError(sourceAction, "Copy File", error.Message);
+                return EvaluationError(sourceAction, "Copy", error.Message);
             if (!transients.ResolveFullPath(evaluatedTargetPath, targetLocation).TryGetResult(out evaluatedTargetPath, out error))
-                return EvaluationError(sourceAction, "Copy File", error.Message);
+                return EvaluationError(sourceAction, "Copy", error.Message);
 
-            return new CopyFileStep
+            return new CopyStep
             {
                 Direction = direction,
                 SourcePath = evaluatedSourcePath,
@@ -516,8 +516,8 @@ namespace VSRAD.Package.Options
         {
             switch (type)
             {
+                case "Copy": return new CopyStep();
                 case "Execute": return new ExecuteStep();
-                case "CopyFile": return new CopyFileStep();
                 case "OpenInEditor": return new OpenInEditorStep();
                 case "RunAction": return new RunActionStep();
                 case "WriteDebugTarget": return new WriteDebugTargetStep();
@@ -530,8 +530,8 @@ namespace VSRAD.Package.Options
         {
             switch (step)
             {
+                case CopyStep _: return "Copy";
                 case ExecuteStep _: return "Execute";
-                case CopyFileStep _: return "CopyFile";
                 case OpenInEditorStep _: return "OpenInEditor";
                 case RunActionStep _: return "RunAction";
                 case WriteDebugTargetStep _: return "WriteDebugTarget";

@@ -24,7 +24,7 @@
         </ObjectDataProvider>
         <ObjectDataProvider x:Key="FileCopyDirections" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="opts:FileCopyDirection"/>
+                <x:Type TypeName="opts:CopyDirection"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
@@ -57,8 +57,8 @@
                         <VirtualizingStackPanel Orientation="Vertical"/>
                     </ItemsPanelTemplate>
                 </Menu.ItemsPanel>
+                <MenuItem Header="Copy" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:CopyStep}" />
                 <MenuItem Header="Execute" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:ExecuteStep}" />
-                <MenuItem Header="Copy File/Directory" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:CopyFileStep}" />
                 <MenuItem Header="Open in Editor" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:OpenInEditorStep}" />
                 <MenuItem Header="Run Action" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:RunActionStep}" />
                 <MenuItem Header="Write Debug Target" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:WriteDebugTargetStep}" />
@@ -125,7 +125,7 @@
                     </Binding.TargetNullValue>
                 </Binding>
                 <ContentControl.Resources>
-                    <DataTemplate DataType="{x:Type opts:CopyFileStep}">
+                    <DataTemplate DataType="{x:Type opts:CopyStep}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="173"/>

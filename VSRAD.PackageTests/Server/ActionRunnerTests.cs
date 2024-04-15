@@ -28,7 +28,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
+                new CopyStep { Direction = CopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             var localTempFile = Path.GetRandomFileName();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
@@ -49,8 +49,8 @@ namespace VSRAD.PackageTests.Server
             Assert.True(result.StepResults[1].Successful);
             Assert.Equal("", result.StepResults[1].Warning);
             Assert.Equal("", result.StepResults[1].Log);
-            Assert.Equal("file-contents", File.ReadAllText(((CopyFileStep)steps[1]).TargetPath));
-            File.Delete(((CopyFileStep)steps[1]).TargetPath);
+            Assert.Equal("file-contents", File.ReadAllText(((CopyStep)steps[1]).TargetPath));
+            File.Delete(((CopyStep)steps[1]).TargetPath);
         }
 
         #region CopyFileStep
@@ -61,7 +61,7 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/key3_49", TargetPath = Path.GetRandomFileName() },
+                new CopyStep { Direction = CopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/key3_49", TargetPath = Path.GetRandomFileName() },
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" } // should not be run
             };
 
@@ -90,7 +90,7 @@ namespace VSRAD.PackageTests.Server
             Assert.False(Directory.Exists(parentDir));
 
             var file = Path.Combine(parentDir, "local-copy");
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/raw3", TargetPath = file } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/raw3", TargetPath = file } };
 
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", 1, default) } });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
@@ -108,7 +108,7 @@ namespace VSRAD.PackageTests.Server
 
             var file = Path.GetTempFileName();
             File.SetAttributes(file, FileAttributes.ReadOnly);
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/raw3", TargetPath = file } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/raw3", TargetPath = file } };
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", default, default) } });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
 
@@ -122,7 +122,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = Path.GetTempFileName(), TargetPath = "/home/mizu/machete/raw3" } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.LocalToRemote, SourcePath = Path.GetTempFileName(), TargetPath = "/home/mizu/machete/raw3" } };
 
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", default, default) } });
             channel.ThenRespond(new PutFileResponse { Status = PutFileStatus.PermissionDenied });
@@ -144,13 +144,13 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
 
             var localPath = Path.GetTempFileName();
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = localPath, IfNotModified = ActionIfNotModified.Fail, TargetPath = Path.GetRandomFileName() } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.LocalToLocal, SourcePath = localPath, IfNotModified = ActionIfNotModified.Fail, TargetPath = Path.GetRandomFileName() } };
             var result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal($"File is stale. The source path was not modified on the local machine: {localPath}", result.StepResults[0].Warning);
 
             var nonexistentPath = @"C:\Non\Existent\Path\To\Users\mizu\raw3";
-            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = nonexistentPath, IfNotModified = ActionIfNotModified.Fail, TargetPath = Path.GetRandomFileName() } };
+            steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.LocalToLocal, SourcePath = nonexistentPath, IfNotModified = ActionIfNotModified.Fail, TargetPath = Path.GetRandomFileName() } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal($"File or directory not found. The source path is missing on the local machine: {nonexistentPath}", result.StepResults[0].Warning);
@@ -159,7 +159,7 @@ namespace VSRAD.PackageTests.Server
             var acl = File.GetAccessControl(lockedPath);
             acl.AddAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User, FileSystemRights.Read, AccessControlType.Deny));
             File.SetAccessControl(lockedPath, acl);
-            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = lockedPath, TargetPath = Path.GetRandomFileName() } };
+            steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.LocalToLocal, SourcePath = lockedPath, TargetPath = Path.GetRandomFileName() } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal($"Access denied. Failed to read local file {lockedPath}", result.StepResults[0].Warning);
@@ -178,7 +178,7 @@ namespace VSRAD.PackageTests.Server
             {
                 // update file timestamp
                 new ExecuteStep { Environment = StepEnvironment.Local, Executable = "cmd.exe", Arguments = $@"/C ""copy /b {Path.GetFileName(file)} +,,""", WorkingDirectory = Path.GetDirectoryName(file) },
-                new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = file, TargetPath = target, IfNotModified = ActionIfNotModified.Fail }
+                new CopyStep { Direction = CopyDirection.LocalToLocal, SourcePath = file, TargetPath = target, IfNotModified = ActionIfNotModified.Fail }
             };
             var result = await runner.RunAsync("HTMT", steps);
             Assert.True(result.Successful);
@@ -186,7 +186,7 @@ namespace VSRAD.PackageTests.Server
 
             // In case of redundant local-to-local copies, no files are accessed
             var localPath = @"C:\Non\Existent\Path\To\Some\Local\File\Or\Directory";
-            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = localPath, TargetPath = localPath, IfNotModified = ActionIfNotModified.Fail } };
+            steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.LocalToLocal, SourcePath = localPath, TargetPath = localPath, IfNotModified = ActionIfNotModified.Fail } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.True(result.Successful);
             Assert.Equal($"No files copied. The source and target locations are identical.\r\n", result.StepResults[0].Log);
@@ -206,7 +206,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "/home/mizu/rawdir", IfNotModified = ActionIfNotModified.DoNotCopy, IncludeSubdirectories = true } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "/home/mizu/rawdir", IfNotModified = ActionIfNotModified.DoNotCopy, IncludeSubdirectories = true } };
 
             // t is unchanged, t2's size is different, empty/ is missing
             channel.ThenRespond(new ListFilesResponse
@@ -242,7 +242,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "/home/mizu/rawdir", IfNotModified = ActionIfNotModified.DoNotCopy } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "/home/mizu/rawdir", IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // Path does not exist
             var result = await runner.RunAsync("HTMT", steps);
@@ -276,7 +276,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.RemoteToLocal, SourcePath = "/home/mizu/rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // t is unchanged, t2's size is different
             channel.ThenRespond(new ListFilesResponse
@@ -313,7 +313,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
+            var steps = new List<IActionStep> { new CopyStep { Direction = CopyDirection.RemoteToLocal, SourcePath = "/home/mizu/rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // t's size is changed => it'll be requested
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("./", default, default), new FileMetadata("t", 1, default) } });
@@ -340,7 +340,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "dvd-prepare" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
+                new CopyStep { Direction = CopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
             };
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
 
@@ -426,7 +426,7 @@ namespace VSRAD.PackageTests.Server
             var level1Steps = new List<IActionStep>
             {
                 new RunActionStep(level2Steps) { Name = "level2" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
+                new CopyStep { Direction = CopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             // 1. Initial timestamp fetch
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) });
@@ -444,7 +444,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") });
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") });
-            // 4. Level 1 Copy File
+            // 4. Level 1 Copy
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", default, DateTime.FromBinary(101)) } });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment(watches: TestHelper.ReadFixtureLines("Watches.txt")));
@@ -712,8 +712,8 @@ result.StepResults[0].Warning);
             readDebugData.DispatchParamsFile.CheckTimestamp = false;
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
+                new CopyStep { Direction = CopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
+                new CopyStep { Direction = CopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
                 readDebugData
             };
 
@@ -744,10 +744,10 @@ result.StepResults[0].Warning);
             Assert.Equal(DateTime.FromFileTime(100), runner.GetInitialFileTimestamp("/home/parker/audio/checked"));
             Assert.Equal(default, runner.GetInitialFileTimestamp("/home/parker/audio/master"));
 
-            Assert.Equal("TestCopyStepChecked", File.ReadAllText(((CopyFileStep)steps[0]).TargetPath));
-            File.Delete(((CopyFileStep)steps[0]).TargetPath);
-            Assert.Equal("TestCopyStepUnchecked", File.ReadAllText(((CopyFileStep)steps[1]).TargetPath));
-            File.Delete(((CopyFileStep)steps[1]).TargetPath);
+            Assert.Equal("TestCopyStepChecked", File.ReadAllText(((CopyStep)steps[0]).TargetPath));
+            File.Delete(((CopyStep)steps[0]).TargetPath);
+            Assert.Equal("TestCopyStepUnchecked", File.ReadAllText(((CopyStep)steps[1]).TargetPath));
+            File.Delete(((CopyStep)steps[1]).TargetPath);
         }
     }
 }
