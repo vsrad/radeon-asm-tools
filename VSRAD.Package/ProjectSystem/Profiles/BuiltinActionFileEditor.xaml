@@ -35,9 +35,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="26"/>
             <RowDefinition Height="26"/>
-            <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
-        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Location"
+        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Location:"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
         <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
             <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
@@ -47,16 +46,11 @@
                        Text="Forced to Local" ToolTip="Overridden by General -> Run on Localhost"/>
         </StackPanel>
 
-        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path"
+        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path:"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
         <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1"
                  ToolTip="Relative paths are resolved against General -> Default Local/Remote Working Dir"/>
         <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                 Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
-
-        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="Check {0} Timestamp"
-               VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
-        <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
-                  IsChecked="{Binding CheckTimestamp, UpdateSourceTrigger=PropertyChanged}"/>
     </Grid>
 </UserControl>

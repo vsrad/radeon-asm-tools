@@ -105,15 +105,12 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             Assert.Equal(StepEnvironment.Remote, readDebugData.OutputFile.Location);
             Assert.Equal("src/dbg/debug_result", readDebugData.OutputFile.Path);
-            Assert.True(readDebugData.OutputFile.CheckTimestamp);
 
             Assert.Equal(StepEnvironment.Remote, readDebugData.WatchesFile.Location);
             Assert.Equal("src/dbg/valid_watches", readDebugData.WatchesFile.Path);
-            Assert.True(readDebugData.OutputFile.CheckTimestamp);
 
             Assert.Equal(StepEnvironment.Remote, readDebugData.DispatchParamsFile.Location);
             Assert.Equal("src/dbg/dispatch_params", readDebugData.DispatchParamsFile.Path);
-            Assert.True(readDebugData.OutputFile.CheckTimestamp);
         }
 
         [Theory]

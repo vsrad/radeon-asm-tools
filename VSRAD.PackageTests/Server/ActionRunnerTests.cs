@@ -422,10 +422,11 @@ namespace VSRAD.PackageTests.Server
             var level3Steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "cleanup", Arguments = "--skip" },
+                new VerifyFileModifiedStep { Location = StepEnvironment.Remote, Path = "output" },
                 new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = true },
-                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output" },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches" },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status" },
                     binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
             var level2Steps = new List<IActionStep>
@@ -444,17 +445,19 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal("autotween", command.Executable);
             });
             // 2. Level 3 timestamp fetch
-            // 3. Level 3 Execute
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) });
+            // 3. Level 3 Execute
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "level3", Stderr = "" }, (Execute command) =>
             {
                 Assert.Equal("cleanup", command.Executable);
             });
-            // 4. Level 3 Read Debug Data
+            // 4. Level 3 timestamp check
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101) });
+            // 5. Level 3 Read Debug Data
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") });
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") });
-            // 4. Level 1 Copy
+            // 6. Level 1 Copy
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("", default, default) } });
             channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, Files = new[] { new PackedFile("", default, Encoding.UTF8.GetBytes("file-contents")) } });
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment(watches: TestHelper.ReadFixtureLines("Watches.txt")));
@@ -518,17 +521,15 @@ namespace VSRAD.PackageTests.Server
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "va11" },
                 new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/glitch/city/output", CheckTimestamp = true },
-                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/glitch/city/watches", CheckTimestamp = false },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/glitch/city/status", CheckTimestamp = false },
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/glitch/city/output" },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/glitch/city/watches" },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/glitch/city/status" },
                     binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment(watches: TestHelper.ReadFixtureLines("Watches.txt")));
 
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
-                Assert.Equal("/glitch/city/output", initTimestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal("/glitch/city/watches", watchesFetch.FilePath));
@@ -556,9 +557,9 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/remote/output", CheckTimestamp = true },
-                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/remote/watches", CheckTimestamp = true },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/remote/dispatch", CheckTimestamp = true },
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/remote/output" },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/remote/watches" },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "/remote/dispatch" },
                     binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
 
@@ -566,30 +567,14 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment(watches: TestHelper.ReadFixtureLines("Watches.txt")));
 
             /* File not found */
-
-            for (int i = 0; i < 3; ++i) // initial timestamp fetch
-                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(i) });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound }, (FetchResultRange w) => Assert.Equal("/remote/watches", w.FilePath));
 
             var result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("Valid watches data is missing. File could not be found on the remote machine at /remote/watches", result.StepResults[0].Warning);
 
-            /* File not changed */
-
-            for (int i = 0; i < 3; ++i) // initial timestamp fetch
-                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(i) });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) },
-                (FetchResultRange w) => Assert.Equal("/remote/watches", w.FilePath));
-
-            result = await runner.RunAsync("Debug", steps);
-            Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("Valid watches data is stale. File was not modified by the debug action on the remote machine at /remote/watches", result.StepResults[0].Warning);
-
             /* Wrong output file size */
 
-            for (int i = 0; i < 3; ++i) // initial timestamp fetch
-                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") },
                 (FetchResultRange f) => Assert.Equal("/remote/watches", f.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") },
@@ -611,9 +596,9 @@ result.StepResults[0].Warning);
             var steps = new List<IActionStep>
             {
                 new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DebugBuffer.bin"), CheckTimestamp = false },
-                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("ValidWatches.txt"), CheckTimestamp = false },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DispatchParams.txt"), CheckTimestamp = false },
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DebugBuffer.bin") },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("ValidWatches.txt") },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DispatchParams.txt") },
                     binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
             var runner = new ActionRunner(channel: null, _mockCallbacks, new ActionEnvironment(watches: TestHelper.ReadFixtureLines("Watches.txt")));
@@ -659,20 +644,14 @@ result.StepResults[0].Warning);
             var steps = new List<IActionStep>
             {
                 new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = true },
-                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFile, CheckTimestamp = false },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchFile, CheckTimestamp = false },
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFile },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchFile },
                     binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment(watches: TestHelper.ReadFixtureLines("Watches.txt")));
-
-            /* File not changed (GetTempFileName creates an empty file) */
-
-            var result = await runner.RunAsync("Debug", steps);
-            Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Debug data is stale. Output file was not modified by the debug action on the local machine at {outputFile}", result.StepResults[0].Warning);
 
             /* Access denied */
 
@@ -680,8 +659,7 @@ result.StepResults[0].Warning);
             acl.AddAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User, FileSystemRights.Read, AccessControlType.Deny));
             File.SetAccessControl(outputFile, acl);
 
-            ((ReadDebugDataStep)steps[0]).OutputFile.CheckTimestamp = false;
-            result = await runner.RunAsync("Debug", steps);
+            var result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal($"Debug data is missing. Access denied. Failed to read local file {outputFile}", result.StepResults[0].Warning);
 

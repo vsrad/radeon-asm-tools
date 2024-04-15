@@ -12,25 +12,21 @@ namespace VSRAD.Package.Options
         private string _path = "";
         public string Path { get => _path; set => SetField(ref _path, value); }
 
-        private bool _checkTimestamp = true;
-        public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
-
         public async Task<Result<BuiltinActionFile>> EvaluateAsync(IMacroEvaluator evaluator)
         {
             var pathResult = await evaluator.EvaluateAsync(Path);
             if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
                 return error;
 
-            return new BuiltinActionFile { Location = Location, Path = evaluatedPath, CheckTimestamp = CheckTimestamp };
+            return new BuiltinActionFile { Location = Location, Path = evaluatedPath };
         }
 
         public override bool Equals(object obj) =>
             obj is BuiltinActionFile file &&
             Location == file.Location &&
-            Path == file.Path &&
-            CheckTimestamp == file.CheckTimestamp;
+            Path == file.Path;
 
         public override int GetHashCode() =>
-            (Location, Path, CheckTimestamp).GetHashCode();
+            (Location, Path).GetHashCode();
     }
 }

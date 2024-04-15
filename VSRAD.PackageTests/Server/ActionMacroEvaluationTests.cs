@@ -234,9 +234,9 @@ namespace VSRAD.PackageTests.Server
             a.Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "remote-executable" });
             a.Steps.Add(new ExecuteStep { Environment = StepEnvironment.Local, Executable = "local-executable" });
             a.Steps.Add(new ReadDebugDataStep(
-                outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-output", CheckTimestamp = true },
-                watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-watches", CheckTimestamp = false },
-                dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status", CheckTimestamp = false },
+                outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-output" },
+                watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-watches" },
+                dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status" },
                 binaryOutput: true, outputOffset: 0, magicNumber: null));
 
             var transients = new ActionEvaluationTransients(@"C:\Local", "/remote", runActionsLocally: false, System.Runtime.InteropServices.OSPlatform.Linux, new[] { a });

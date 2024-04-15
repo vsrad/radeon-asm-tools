@@ -284,21 +284,20 @@ namespace VSRAD.Package.Server
             }
             string validWatchesString;
             {
-                var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp, cancellationToken);
+                var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), cancellationToken);
                 if (!result.TryGetResult(out var data, out var error))
                     return new StepResult(false, error.Message, "", breakState: null);
                 validWatchesString = Encoding.UTF8.GetString(data);
             }
             string dispatchParamsString;
             {
-                var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp, cancellationToken);
+                var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), cancellationToken);
                 if (!result.TryGetResult(out var data, out var error))
                     return new StepResult(false, error.Message, "", breakState: null);
                 dispatchParamsString = Encoding.UTF8.GetString(data);
             }
             {
                 var outputPath = step.OutputFile.Path;
-                var initOutputTimestamp = GetInitialFileTimestamp(outputPath);
 
                 BreakStateOutputFile outputFile;
                 byte[] localOutputData = null;
@@ -309,8 +308,6 @@ namespace VSRAD.Package.Server
 
                     if (response.Status == FetchStatus.FileNotFound)
                         return new StepResult(false, $"Debug data is missing. Output file could not be found on the remote machine at {outputPath}", "", breakState: null);
-                    if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the remote machine at {outputPath}", "", breakState: null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
                     var dataDwordCount = Math.Max(0, (response.ByteCount - offset) / 4);
@@ -319,9 +316,6 @@ namespace VSRAD.Package.Server
                 else
                 {
                     var timestamp = GetLocalFileLastWriteTimeUtc(outputPath);
-                    if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the local machine at {outputPath}", "", breakState: null);
-
                     var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
                     if (!ReadLocalFile(outputPath, out localOutputData, out var readError, readOffset))
                         return new StepResult(false, "Debug data is missing. " + readError, "", breakState: null);
@@ -367,24 +361,17 @@ namespace VSRAD.Package.Server
                 return new StepResult(true, "", "");
         }
 
-        private async Task<Result<byte[]>> ReadDebugDataFileAsync(string type, string path, bool isRemote, bool checkTimestamp, CancellationToken cancellationToken)
+        private async Task<Result<byte[]>> ReadDebugDataFileAsync(string type, string path, bool isRemote, CancellationToken cancellationToken)
         {
-            var initTimestamp = GetInitialFileTimestamp(path);
             if (isRemote)
             {
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = path }, cancellationToken);
-
                 if (response.Status == FetchStatus.FileNotFound)
                     return new Error($"{type} data is missing. File could not be found on the remote machine at {path}");
-                if (checkTimestamp && response.Timestamp == initTimestamp)
-                    return new Error($"{type} data is stale. File was not modified by the debug action on the remote machine at {path}");
-
                 return response.Data;
             }
             else
             {
-                if (checkTimestamp && GetLocalFileLastWriteTimeUtc(path) == initTimestamp)
-                    return new Error($"{type} data is stale. File was not modified by the debug action on the local machine at {path}");
                 if (!ReadLocalFile(path, out var data, out var error))
                     return new Error($"{type} data is missing. " + error);
                 return data;
@@ -459,20 +446,6 @@ namespace VSRAD.Package.Server
                     else
                         _initialTimestamps[verifyFileModified.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
                             new FetchMetadata { FilePath = verifyFileModified.Path }, cancellationToken)).Timestamp;
-                }
-                if (step is ReadDebugDataStep readDebugData)
-                {
-                    var files = new[] { readDebugData.WatchesFile, readDebugData.DispatchParamsFile, readDebugData.OutputFile };
-                    foreach (var file in files)
-                    {
-                        if (!file.CheckTimestamp || string.IsNullOrEmpty(file.Path))
-                            continue;
-                        if (file.IsRemote())
-                            _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                                new FetchMetadata { FilePath = file.Path }, cancellationToken)).Timestamp;
-                        else
-                            _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
-                    }
                 }
             }
         }

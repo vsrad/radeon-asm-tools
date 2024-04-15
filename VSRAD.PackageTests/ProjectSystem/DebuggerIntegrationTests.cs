@@ -48,16 +48,15 @@ namespace VSRAD.PackageTests.ProjectSystem
             project.Options.DebuggerOptions.Watches.AddRange(TestHelper.ReadFixtureLines("Watches.txt").Select(w => new Watch(w, new VariableType(VariableCategory.Hex, 32))));
 
             var readDebugDataStep = new ReadDebugDataStep { BinaryOutput = true, OutputOffset = 0 };
-            readDebugDataStep.OutputFile.CheckTimestamp = false;
             readDebugDataStep.OutputFile.Path = TestHelper.GetFixturePath("DebugBuffer.bin");
             readDebugDataStep.OutputFile.Location = StepEnvironment.Local;
-            readDebugDataStep.WatchesFile.CheckTimestamp = true;
             readDebugDataStep.WatchesFile.Path = "watches-path";
-            readDebugDataStep.DispatchParamsFile.CheckTimestamp = false;
             readDebugDataStep.DispatchParamsFile.Path = "dispatch-params-path";
 
             project.Options.Profile.Actions[0].Steps.Add(new ExecuteStep
-            { Executable = "ohmu", Arguments = "-source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine)" });
+                { Executable = "ohmu", Arguments = "-source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine)" });
+            project.Options.Profile.Actions[0].Steps.Add(new VerifyFileModifiedStep
+                { Location = StepEnvironment.Remote, Path = "dispatch-params-path", AbortIfNotModifed = true, ErrorMessage = "Dispatch parameters are stale" });
             project.Options.Profile.Actions[0].Steps.Add(readDebugDataStep);
 
             var activeEditor = new Mock<IEditorView>();
@@ -80,12 +79,14 @@ namespace VSRAD.PackageTests.ProjectSystem
             /* Set up server responses */
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata timestampFetch) =>
-                Assert.Equal("/periphery/votw/watches-path", timestampFetch.FilePath));
+                Assert.Equal("/periphery/votw/dispatch-params-path", timestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);
                 Assert.Equal(@"-source JATO.s -source-line 13", execute.Arguments);
             });
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) }, (FetchMetadata timestampFetch) =>
+                Assert.Equal("/periphery/votw/dispatch-params-path", timestampFetch.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100), Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal("/periphery/votw/watches-path", watchesFetch.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") }, (FetchResultRange dispatchParamsFetch) =>
