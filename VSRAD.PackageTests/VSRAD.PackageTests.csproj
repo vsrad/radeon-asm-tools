@@ -76,7 +76,6 @@
     <Compile Include="ProjectSystem\DebuggerIntegrationTests.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEvaluatorTests.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditContextTests.cs" />
-    <Compile Include="ProjectSystem\Profiles\ObsoleteFormatProfileImportTests.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContextTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\ActionMacroEvaluationTests.cs" />
@@ -92,7 +91,6 @@
     <None Include="Fixtures\DebugBuffer.bin" />
     <None Include="Fixtures\DebugBufferGen.pl" />
     <None Include="Key.snk" />
-    <None Include="Fixtures\ConfigsTest.vcxproj.conf.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VSRAD.Deborgar\VSRAD.Deborgar.csproj">

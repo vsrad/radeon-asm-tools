@@ -39,9 +39,8 @@ namespace VSRAD.Package.ProjectSystem
         public UnconfiguredProject UnconfiguredProject { get; }
         public string RootPath { get; }
 
-        private readonly string _visualOptionsFilePath;
-        private readonly string _profilesFilePath;
-        private readonly string _oldOptionsFilePath;
+        private readonly string _userOptionsFilePath;
+        private readonly string _profileOptionsFilePath;
 
         private bool _loaded = false;
         private readonly List<Action<ProjectOptions>> _onLoadCallbacks = new List<Action<ProjectOptions>>();
@@ -50,9 +49,8 @@ namespace VSRAD.Package.ProjectSystem
         public Project(UnconfiguredProject unconfiguredProject)
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
-            _profilesFilePath = unconfiguredProject.FullPath + ".profiles.json";
-            _oldOptionsFilePath = unconfiguredProject.FullPath + ".conf.json";
-            _visualOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
+            _userOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
+            _profileOptionsFilePath = unconfiguredProject.FullPath + ".profiles.json";
             UnconfiguredProject = unconfiguredProject;
         }
 
@@ -68,7 +66,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             if (projectOptions == null)
             {
-                Options = ProjectOptions.Read(_visualOptionsFilePath, _profilesFilePath, _oldOptionsFilePath);
+                Options = ProjectOptions.Read(_userOptionsFilePath, _profileOptionsFilePath);
 
                 Options.PropertyChanged += OptionsPropertyChanged;
                 Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
@@ -98,7 +96,7 @@ namespace VSRAD.Package.ProjectSystem
                 SaveOptions();
         }
 
-        public void SaveOptions() => Options.Write(_visualOptionsFilePath, _profilesFilePath);
+        public void SaveOptions() => Options.Write(_userOptionsFilePath, _profileOptionsFilePath);
 
         public IProjectProperties GetProjectProperties()
         {
