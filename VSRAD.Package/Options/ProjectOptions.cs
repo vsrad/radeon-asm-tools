@@ -88,11 +88,10 @@ namespace VSRAD.Package.Options
         #endregion
 
         #region Read/Write
-        public static ProjectOptions Read(string userOptionsPath, string profilesOptionsPath)
+        public static Result<ProjectOptions> Read(string userOptionsPath, string profilesOptionsPath)
         {
             ProjectOptions options = null;
-            // Read user options (.user.json) and profiles (.profiles.json) in separate try blocks
-            // so that if one file is missing we can default it and still read the other one properly
+            // Read user options (.user.json) and profiles (.profiles.json) in separate try blocks: if one file is missing, we can default it and still read the other one properly
             try
             {
                 var optionsJson = JObject.Parse(File.ReadAllText(userOptionsPath));
@@ -101,7 +100,7 @@ namespace VSRAD.Package.Options
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
             catch (Exception e)
             {
-                Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
+                return new Error($"Failed to load user options. The plugin will be unavailable. Check that the configuration file is created with an up-to-date version of the plugin.\r\n\r\nUnderlying exception: {e.Message}\r\nConfiguration file: {userOptionsPath}", critical: true);
             }
 
             if (options == null) // Note that JSON parsing can return null even on success (e.g. if the file is empty)
@@ -117,7 +116,7 @@ namespace VSRAD.Package.Options
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
             catch (Exception e)
             {
-                Errors.ShowWarning($"An error has occurred while loading the profiles: {e.Message}\r\nProceeding with defaults.");
+                return new Error($"Failed to load profiles. The plugin will be unavailable. Check that the configuration file is created with an up-to-date version of the plugin.\r\n\r\nUnderlying exception: {e.Message}\r\nConfiguration file: {profilesOptionsPath}", critical: true);
             }
 
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))

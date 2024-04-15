@@ -6,7 +6,6 @@ using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
-using System.Collections.Generic;
 using VSRAD.Package.Commands;
 
 namespace VSRAD.Package.ProjectSystem
@@ -22,8 +21,6 @@ namespace VSRAD.Package.ProjectSystem
         public event EventHandler<ProjectLoadedEventArgs> ProjectLoaded;
 
         private Project _currentRadProject;
-
-        private Dictionary<string, Options.ProjectOptions> _options = new Dictionary<string, Options.ProjectOptions>();
 
         public SolutionManager(IVsMonitorSelection vsMonitorSelection)
         {
@@ -84,27 +81,17 @@ namespace VSRAD.Package.ProjectSystem
             if (IsTemporaryVisualCProject(cpsProject))
                 return;
 
-            _currentRadProject = (Project)cpsProject.Services.ExportProvider.GetExportedValueOrDefault<IProject>();
-            if (_currentRadProject == null)
-                return;
-
-            if (_options.TryGetValue(cpsProject.FullPath, out var options))
+            var cpsExportProvider = cpsProject.Services.ExportProvider;
+            if (cpsExportProvider.GetExportedValueOrDefault<IProject>() is Project project && project.TryLoad())
             {
-                _currentRadProject.Load(options);
+                _currentRadProject = project;
+                var loadedEventArgs = new ProjectLoadedEventArgs
+                {
+                    ToolWindowIntegration = cpsExportProvider.GetExportedValue<IToolWindowIntegration>(),
+                    CommandRouter = cpsExportProvider.GetExportedValue<ICommandRouter>()
+                };
+                ProjectLoaded?.Invoke(this, loadedEventArgs);
             }
-            else
-            {
-                _currentRadProject.Load(null);
-                _options.Add(cpsProject.FullPath, _currentRadProject.Options);
-            }
-
-            var exportProvider = cpsProject.Services.ExportProvider;
-            var loadedEventArgs = new ProjectLoadedEventArgs
-            {
-                ToolWindowIntegration = exportProvider.GetExportedValue<IToolWindowIntegration>(),
-                CommandRouter = exportProvider.GetExportedValue<ICommandRouter>()
-            };
-            ProjectLoaded?.Invoke(this, loadedEventArgs);
         }
 
         int IVsSelectionEvents.OnCmdUIContextChanged(uint dwCmdUICookie, int fActive)

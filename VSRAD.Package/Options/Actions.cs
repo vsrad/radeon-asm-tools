@@ -562,7 +562,7 @@ namespace VSRAD.Package.Options
                 case "ReadDebugData": return new ReadDebugDataStep();
                 case "VerifyFileModified": return new VerifyFileModifiedStep();
             }
-            throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
+            throw new InvalidDataException($"Unknown step type identifer \"{type}\"");
         }
 
         private static string GetStepType(object step)
@@ -577,7 +577,7 @@ namespace VSRAD.Package.Options
                 case ReadDebugDataStep _: return "ReadDebugData";
                 case VerifyFileModifiedStep _: return "VerifyFileModified";
             }
-            throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));
+            throw new InvalidDataException($"Step type identifier is not defined for {step.GetType()}");
         }
     }
 }

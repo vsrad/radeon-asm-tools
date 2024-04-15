@@ -62,22 +62,21 @@ namespace VSRAD.Package.ProjectSystem
                 _onLoadCallbacks.Add(callback);
         }
 
-        public void Load(ProjectOptions projectOptions)
+        public bool TryLoad()
         {
-            if (projectOptions == null)
+            if (!ProjectOptions.Read(_userOptionsFilePath, _profileOptionsFilePath).TryGetResult(out var options, out var error))
             {
-                Options = ProjectOptions.Read(_userOptionsFilePath, _profileOptionsFilePath);
+                Errors.Show(error);
+                return false;
+            }
 
-                Options.PropertyChanged += OptionsPropertyChanged;
-                Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
-                Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
-                Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
-                Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
-            }
-            else
-            {
-                Options = projectOptions;
-            }
+            Options = options;
+
+            Options.PropertyChanged += OptionsPropertyChanged;
+            Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
+            Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
+            Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
+            Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
 
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
@@ -85,6 +84,8 @@ namespace VSRAD.Package.ProjectSystem
             foreach (var callback in _onLoadCallbacks)
                 callback(Options);
             _onLoadCallbacks.Clear();
+
+            return true;
         }
 
         private void OptionsPropertyChanged(object sender, PropertyChangedEventArgs e) => SaveOptions();
