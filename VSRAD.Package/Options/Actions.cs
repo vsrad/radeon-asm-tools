@@ -79,12 +79,6 @@ namespace VSRAD.Package.Options
         RemoteToLocal, LocalToRemote, LocalToLocal
     }
 
-    [JsonConverter(typeof(StringEnumConverter))]
-    public enum ActionIfNotModified
-    {
-        Copy, DoNotCopy, Fail
-    }
-
     public static class ActionExtensions
     {
         public static bool IsRemote(this BuiltinActionFile file) =>
@@ -493,6 +487,49 @@ namespace VSRAD.Package.Options
             CheckMagicNumber == step.CheckMagicNumber;
     }
 
+    public sealed class VerifyFileModifiedStep : DefaultNotifyPropertyChanged, IActionStep
+    {
+        private StepEnvironment _location = StepEnvironment.Local;
+        public StepEnvironment Location { get => _location; set => SetField(ref _location, value); }
+
+        private string _path = "";
+        public string Path { get => _path; set => SetField(ref _path, value); }
+
+        private bool _abortIfNotModified;
+        public bool AbortIfNotModifed { get => _abortIfNotModified; set => SetField(ref _abortIfNotModified, value); }
+
+        private string _errorMessage = "";
+        public string ErrorMessage { get => _errorMessage; set => SetField(ref _errorMessage, value); }
+
+        public override string ToString() =>
+            string.IsNullOrWhiteSpace(Path) ? "Verify File Modified" : $"Verify File Modified {Location} {Path}";
+
+        public override bool Equals(object obj) =>
+            obj is VerifyFileModifiedStep step && Path == step.Path && AbortIfNotModifed == step.AbortIfNotModifed && ErrorMessage == step.ErrorMessage;
+
+        public override int GetHashCode() => 13;
+
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
+        {
+            var pathResult = await evaluator.EvaluateAsync(Path);
+            if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
+                return EvaluationError(sourceAction, "Verify File Modified", error.Message);
+            var messageResult = await evaluator.EvaluateAsync(ErrorMessage);
+            if (!messageResult.TryGetResult(out var evaluatedMessage, out error))
+                return EvaluationError(sourceAction, "Verify File Modified", error.Message);
+
+            if (string.IsNullOrWhiteSpace(evaluatedPath))
+                return EvaluationError(sourceAction, "Verify File Modified", "The path evaluates to an empty string");
+            if (!transients.ResolveFullPath(evaluatedPath, Location).TryGetResult(out evaluatedPath, out error))
+                return EvaluationError(sourceAction, "Verify File Modified", error.Message);
+
+            if (string.IsNullOrWhiteSpace(evaluatedMessage))
+                return EvaluationError(sourceAction, "Verify File Modified", "The error message evaluates to an empty string");
+
+            return new VerifyFileModifiedStep { Location = Location, Path = evaluatedPath, AbortIfNotModifed = AbortIfNotModifed, ErrorMessage = evaluatedMessage };
+        }
+    }
+
     public sealed class ActionStepJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) =>
@@ -523,6 +560,7 @@ namespace VSRAD.Package.Options
                 case "RunAction": return new RunActionStep();
                 case "WriteDebugTarget": return new WriteDebugTargetStep();
                 case "ReadDebugData": return new ReadDebugDataStep();
+                case "VerifyFileModified": return new VerifyFileModifiedStep();
             }
             throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
         }
@@ -537,6 +575,7 @@ namespace VSRAD.Package.Options
                 case RunActionStep _: return "RunAction";
                 case WriteDebugTargetStep _: return "WriteDebugTarget";
                 case ReadDebugDataStep _: return "ReadDebugData";
+                case VerifyFileModifiedStep _: return "VerifyFileModified";
             }
             throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));
         }

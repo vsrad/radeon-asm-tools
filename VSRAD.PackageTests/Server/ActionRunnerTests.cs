@@ -24,11 +24,14 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task SucessfulRunTestAsync()
         {
+            var tmpFile = Path.GetTempFileName();
             var channel = new MockCommunicationChannel();
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
-                new CopyStep { Direction = CopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
+                new VerifyFileModifiedStep { Location = StepEnvironment.Remote, AbortIfNotModifed = true, Path = "/home/mizu/machete/tweened.tvpp" },
+                new CopyStep { Direction = CopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = tmpFile },
+                new VerifyFileModifiedStep { Location = StepEnvironment.Local, AbortIfNotModifed = true, Path = tmpFile },
             };
             var localTempFile = Path.GetRandomFileName();
             var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
@@ -39,8 +42,9 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal("/home/mizu/machete/tweened.tvpp", command.FilePath);
             });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "", Stderr = "" });
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101) });
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("", 1, DateTime.FromBinary(101)) } });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
+            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, Files = new[] { new PackedFile("", DateTime.FromBinary(101), Encoding.UTF8.GetBytes("file-contents")) } });
             var result = await runner.RunAsync("HTMT", steps);
             Assert.True(result.Successful);
             Assert.True(result.StepResults[0].Successful);
@@ -49,8 +53,11 @@ namespace VSRAD.PackageTests.Server
             Assert.True(result.StepResults[1].Successful);
             Assert.Equal("", result.StepResults[1].Warning);
             Assert.Equal("", result.StepResults[1].Log);
-            Assert.Equal("file-contents", File.ReadAllText(((CopyStep)steps[1]).TargetPath));
-            File.Delete(((CopyStep)steps[1]).TargetPath);
+            Assert.True(result.StepResults[2].Successful);
+            Assert.Equal("", result.StepResults[2].Warning);
+            Assert.Equal("", result.StepResults[2].Log);
+            Assert.Equal("file-contents", File.ReadAllText(tmpFile));
+            File.Delete(tmpFile);
         }
 
         #region CopyStep
@@ -65,19 +72,11 @@ namespace VSRAD.PackageTests.Server
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" } // should not be run
             };
 
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }); // init timestamp fetch
             channel.ThenRespond(new ListFilesResponse { Files = Array.Empty<FileMetadata>() });
             var result = await runner.RunAsync("HTMT", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("File or directory not found. The source path is missing on the remote machine: /home/mizu/machete/key3_49", result.StepResults[0].Warning);
-
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) }); // init timestamp fetch
-            channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("", 1, DateTime.FromBinary(100)) } });
-            result = await runner.RunAsync("HTMT", steps, false);
-            Assert.False(result.Successful);
-            Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("File is stale. The source path was not modified on the remote machine: /home/mizu/machete/key3_49", result.StepResults[0].Warning);
+            Assert.Equal("The source file or directory is missing on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
         }
 
         [Fact]
@@ -708,57 +707,82 @@ result.StepResults[0].Warning);
         #endregion
 
         [Fact]
-        public async Task VerifiesTimestampsTestAsync()
+        public async Task VerifyFileModifiedLocalTestAsync()
         {
-            var channel = new MockCommunicationChannel();
-
-            var readDebugData = new ReadDebugDataStep();
-            readDebugData.OutputFile.Location = StepEnvironment.Remote;
-            readDebugData.OutputFile.CheckTimestamp = true;
-            readDebugData.OutputFile.Path = "/home/parker/audio/master";
-            readDebugData.WatchesFile.Location = StepEnvironment.Remote;
-            readDebugData.WatchesFile.CheckTimestamp = false;
-            readDebugData.WatchesFile.Path = "/home/parker/audio/copy";
-            readDebugData.DispatchParamsFile.Location = StepEnvironment.Remote;
-            readDebugData.DispatchParamsFile.CheckTimestamp = false;
-            var steps = new List<IActionStep>
+            var testFile = Path.GetTempFileName();
+            /* File is modified */
             {
-                new CopyStep { Direction = CopyDirection.RemoteToLocal, SkipIfNotModified = false, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
-                new CopyStep { Direction = CopyDirection.RemoteToLocal, SkipIfNotModified = false, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
-                readDebugData
-            };
+                var steps = new List<IActionStep>
+                {
+                    new ExecuteStep { Environment = StepEnvironment.Local, Executable = "cmd.exe", Arguments = $@"/C ""copy /b {Path.GetFileName(testFile)} +,,""", WorkingDirectory = Path.GetDirectoryName(testFile) },
+                    new VerifyFileModifiedStep { Path = testFile, AbortIfNotModifed = true, ErrorMessage = "Custom file not modifed message" }
+                };
+                var runner = new ActionRunner(channel: null, _mockCallbacks, new ActionEnvironment());
+                var result = await runner.RunAsync("", steps);
+                Assert.True(result.Successful);
+                Assert.Empty(result.StepResults[0].Warning);
+            }
+            /* File is not modified (error) */
+            {
+                var steps = new List<IActionStep> { new VerifyFileModifiedStep { Path = testFile, AbortIfNotModifed = true, ErrorMessage = "Custom file not modifed message" } };
+                var runner = new ActionRunner(channel: null, _mockCallbacks, new ActionEnvironment());
+                var result = await runner.RunAsync("", steps);
+                Assert.False(result.Successful);
+                Assert.Equal("Custom file not modifed message", result.StepResults[0].Warning);
+            }
+            /* File is not modified (warning) */
+            {
+                var steps = new List<IActionStep> { new VerifyFileModifiedStep { Path = testFile, AbortIfNotModifed = false, ErrorMessage = "Custom file not modifed message" } };
+                var runner = new ActionRunner(channel: null, _mockCallbacks, new ActionEnvironment());
+                var result = await runner.RunAsync("", steps);
+                Assert.True(result.Successful);
+                Assert.Equal("Custom file not modifed message", result.StepResults[0].Warning);
+            }
+            File.Delete(testFile);
+        }
 
-            var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
-
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(100) }, (FetchMetadata command) =>
-                Assert.Equal("/home/parker/audio/checked", command.FilePath));
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata command) =>
-                Assert.Equal("/home/parker/audio/master", command.FilePath));
-
-            channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("", 1, DateTime.FromBinary(101)) } },
-                (ListFilesCommand command) => { Assert.Equal("/home/parker/audio/checked", command.RootPath); });
-            channel.ThenRespond(new ResultRangeFetched { Data = Encoding.UTF8.GetBytes("TestCopyStepChecked") },
-                (FetchResultRange command) => Assert.Equal("/home/parker/audio/checked", command.FilePath));
-            channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("", 1, DateTime.FromBinary(101)) } },
-                (ListFilesCommand command) => { Assert.Equal("/home/parker/audio/unchecked", command.RootPath); });
-            channel.ThenRespond(new ResultRangeFetched { Data = Encoding.UTF8.GetBytes("TestCopyStepUnchecked") },
-                (FetchResultRange command) => Assert.Equal("/home/parker/audio/unchecked", command.FilePath));
-
-            // ReadDebugDataStep
-            channel.ThenRespond(new ResultRangeFetched());
-            channel.ThenRespond(new ResultRangeFetched());
-            channel.ThenRespond(new MetadataFetched());
-
-            await runner.RunAsync("UFOW", steps);
-            Assert.True(channel.AllInteractionsHandled);
-
-            Assert.Equal(DateTime.FromFileTime(100), runner.GetInitialFileTimestamp("/home/parker/audio/checked"));
-            Assert.Equal(default, runner.GetInitialFileTimestamp("/home/parker/audio/master"));
-
-            Assert.Equal("TestCopyStepChecked", File.ReadAllText(((CopyStep)steps[0]).TargetPath));
-            File.Delete(((CopyStep)steps[0]).TargetPath);
-            Assert.Equal("TestCopyStepUnchecked", File.ReadAllText(((CopyStep)steps[1]).TargetPath));
-            File.Delete(((CopyStep)steps[1]).TargetPath);
+        [Fact]
+        public async Task VerifyFileModifiedRemoteTestAsync()
+        {
+            /* File is modified */
+            {
+                var channel = new MockCommunicationChannel();
+                var steps = new List<IActionStep> { new VerifyFileModifiedStep { Location = StepEnvironment.Remote, Path = "/test/file", AbortIfNotModifed = true, ErrorMessage = "Custom file not modifed message" } };
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) }, (FetchMetadata command) =>
+                    Assert.Equal("/test/file", command.FilePath));
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(1) }, (FetchMetadata command) =>
+                    Assert.Equal("/test/file", command.FilePath));
+                var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
+                var result = await runner.RunAsync("", steps);
+                Assert.True(result.Successful);
+                Assert.Empty(result.StepResults[0].Warning);
+            }
+            /* File is not modified (error) */
+            {
+                var channel = new MockCommunicationChannel();
+                var steps = new List<IActionStep> { new VerifyFileModifiedStep { Location = StepEnvironment.Remote, Path = "/test/file", AbortIfNotModifed = true, ErrorMessage = "Custom file not modifed message" } };
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) }, (FetchMetadata command) =>
+                    Assert.Equal("/test/file", command.FilePath));
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) }, (FetchMetadata command) =>
+                    Assert.Equal("/test/file", command.FilePath));
+                var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
+                var result = await runner.RunAsync("", steps);
+                Assert.False(result.Successful);
+                Assert.Equal("Custom file not modifed message", result.StepResults[0].Warning);
+            }
+            /* File is not modified (warning) */
+            {
+                var channel = new MockCommunicationChannel();
+                var steps = new List<IActionStep> { new VerifyFileModifiedStep { Location = StepEnvironment.Remote, Path = "/test/file", AbortIfNotModifed = false, ErrorMessage = "Custom file not modifed message" } };
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata command) =>
+                    Assert.Equal("/test/file", command.FilePath));
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata command) =>
+                    Assert.Equal("/test/file", command.FilePath));
+                var runner = new ActionRunner(channel.Object, _mockCallbacks, new ActionEnvironment());
+                var result = await runner.RunAsync("", steps);
+                Assert.True(result.Successful);
+                Assert.Equal("Custom file not modifed message", result.StepResults[0].Warning);
+            }
         }
     }
 }

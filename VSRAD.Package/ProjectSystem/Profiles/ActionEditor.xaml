@@ -28,12 +28,20 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
-        <local:ActionEditorIfNotModifiedConverter x:Key="IfNotModifiedConverter"/>
         <utils:WpfMagicNumberConverter x:Key="MagicNumberConverter"/>
         <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
         <utils:WpfInverseBoolConverter x:Key="InverseBoolConverter"/>
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenFalseConverter" TrueValue="Collapsed" FalseValue="Visible" />
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="ToolTipService.InitialShowDelay" Value="100"/>
+        </Style>
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="ToolTipService.InitialShowDelay" Value="100"/>
+        </Style>
+        <Style TargetType="{x:Type ComboBox}">
+            <Setter Property="ToolTipService.InitialShowDelay" Value="100"/>
+        </Style>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical" x:Name="Root">
         <DockPanel Height="26" Margin="0,4,4,4">
@@ -63,6 +71,7 @@
                 <MenuItem Header="Run Action" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:RunActionStep}" />
                 <MenuItem Header="Write Debug Target" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:WriteDebugTargetStep}" />
                 <MenuItem Header="Read Debug Data" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:ReadDebugDataStep}" />
+                <MenuItem Header="Verify File Modified" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:VerifyFileModifiedStep}" />
             </Menu>
         </Popup>
         <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1,1,1,0">
@@ -162,22 +171,20 @@
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
                                     Tag="TargetPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                            <Label Content="If not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
-                            <ComboBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
-                                      SelectedIndex="{Binding IfNotModified, Converter={StaticResource IfNotModifiedConverter}, Mode=TwoWay}">
-                                <ComboBoxItem Content="Copy"/>
-                                <ComboBoxItem Content="Do Not Copy"/>
-                                <ComboBoxItem Content="Fail"/>
-                            </ComboBox>
+                            <Label Content="Filename Globs To Copy:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <TextBox Text="{Binding GlobsToCopy, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
+                                     ToolTip="Semicolon separated filename patterns to copy. Examples: '*' -- all files in the top level directory, 'bin/*.exe' -- all files with extension '.exe' in the 'bin' subdirectory, '**/*' -- all files in any subdirectory. The patterns are ignored if the source path is a file."/>
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
+                                    Tag="GlobsToCopy" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                            <Label Content="Preserve Timestamps:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <Label Content="Skip If Not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
+                                      IsChecked="{Binding SkipIfNotModified, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <Label Content="Preserve Timestamps:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
                                       IsChecked="{Binding PreserveTimestamps, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             
-                            <Label Content="Include Subdirectories:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
-                                      IsChecked="{Binding IncludeSubdirectories, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
                             <Label Content="Use Compression:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"
                                       IsChecked="{Binding UseCompression, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -355,6 +362,44 @@
                                                            MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
                                                            CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
                                                            Header="Dispatch Params" Grid.Row="5" Grid.ColumnSpan="3" />
+                        </Grid>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type opts:VerifyFileModifiedStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="34"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Content="Location:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
+                                <ComboBox ItemsSource="{Binding Source={StaticResource StepEnvironments}}" SelectedItem="{Binding Location, Mode=TwoWay}"
+                                          Height="22" Width="160" HorizontalAlignment="Left"/>
+                                <TextBlock Margin="4,0" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"
+                                           Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
+                                           Text="Forced to Local" ToolTip="Overridden by General -> Run on Localhost"/>
+                            </StackPanel>
+
+                            <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                                    Tag="Path" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Abort Action If Not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
+                                      IsChecked="{Binding AbortIfNotModifed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <Label Content="Message If Not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <TextBox Text="{Binding ErrorMessage, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" />
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
+                                    Tag="ErrorMessage" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
                         </Grid>
                     </DataTemplate>
                 </ContentControl.Resources>

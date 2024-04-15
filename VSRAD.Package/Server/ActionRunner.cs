@@ -84,6 +84,9 @@ namespace VSRAD.Package.Server
                     case ReadDebugDataStep readDebugData:
                         result = await DoReadDebugDataAsync(readDebugData, cancellationToken);
                         break;
+                    case VerifyFileModifiedStep verifyFileModified:
+                        result = await DoVerifyFileModifiedAsync(verifyFileModified, cancellationToken);
+                        break;
                     default:
                         throw new NotImplementedException();
                 }
@@ -336,6 +339,34 @@ namespace VSRAD.Package.Server
             }
         }
 
+        private async Task<StepResult> DoVerifyFileModifiedAsync(VerifyFileModifiedStep step, CancellationToken cancellationToken)
+        {
+            var initTimestamp = GetInitialFileTimestamp(step.Path);
+
+            DateTime currentTimestamp;
+            if (step.Location == StepEnvironment.Local)
+            {
+                try
+                {
+                    currentTimestamp = File.GetLastWriteTimeUtc(step.Path);
+                }
+                catch (Exception e)
+                {
+                    return new StepResult(false, $"Failed to retrieve last write time of local path {step.Path}. {e.Message}", "");
+                }
+            }
+            else
+            {
+                var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = step.Path }, cancellationToken);
+                currentTimestamp = response.Timestamp;
+            }
+
+            if (initTimestamp == currentTimestamp)
+                return new StepResult(successful: !step.AbortIfNotModifed, string.IsNullOrEmpty(step.ErrorMessage) ? $"File is not modified at {step.Path}" : step.ErrorMessage, "");
+            else
+                return new StepResult(true, "", "");
+        }
+
         private async Task<Result<byte[]>> ReadDebugDataFileAsync(string type, string path, bool isRemote, bool checkTimestamp, CancellationToken cancellationToken)
         {
             var initTimestamp = GetInitialFileTimestamp(path);
@@ -421,6 +452,14 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
+                if (step is VerifyFileModifiedStep verifyFileModified)
+                {
+                    if (verifyFileModified.Location == StepEnvironment.Local)
+                        _initialTimestamps[verifyFileModified.Path] = GetLocalFileLastWriteTimeUtc(verifyFileModified.Path);
+                    else
+                        _initialTimestamps[verifyFileModified.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
+                            new FetchMetadata { FilePath = verifyFileModified.Path }, cancellationToken)).Timestamp;
+                }
                 if (step is ReadDebugDataStep readDebugData)
                 {
                     var files = new[] { readDebugData.WatchesFile, readDebugData.DispatchParamsFile, readDebugData.OutputFile };
