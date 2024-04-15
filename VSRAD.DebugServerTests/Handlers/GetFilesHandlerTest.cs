@@ -63,7 +63,7 @@ namespace VSRAD.DebugServerTests.Handlers
                 RootPath = tmpPath,
                 Paths = new[] { "test" }
             });
-            Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
+            Assert.Equal(GetFilesStatus.FileOrDirectoryNotFound, response.Status);
 
             Directory.CreateDirectory(tmpPath);
 
@@ -74,7 +74,7 @@ namespace VSRAD.DebugServerTests.Handlers
                 RootPath = tmpPath,
                 Paths = new[] { "test" }
             });
-            Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
+            Assert.Equal(GetFilesStatus.FileOrDirectoryNotFound, response.Status);
         }
     }
 }

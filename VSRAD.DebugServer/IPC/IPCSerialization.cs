@@ -47,9 +47,9 @@ namespace VSRAD.DebugServer.IPC
             Write7BitEncodedInt(files.Length);
             foreach (var file in files)
             {
-                WriteLengthPrefixedBlob(file.Data);
                 Write(file.RelativePath);
                 Write(file.LastWriteTimeUtc);
+                WriteLengthPrefixedBlob(file.Data);
             }
         }
     }
@@ -93,7 +93,7 @@ namespace VSRAD.DebugServer.IPC
             var fileCount = Read7BitEncodedInt();
             var files = new PackedFile[fileCount];
             for (int i = 0; i < fileCount; ++i)
-                files[i] = new PackedFile(ReadLengthPrefixedBlob(), ReadString(), ReadDateTime());
+                files[i] = new PackedFile(ReadString(), ReadDateTime(), ReadLengthPrefixedBlob());
             return files;
         }
     }

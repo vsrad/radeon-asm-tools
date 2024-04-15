@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -8,7 +9,7 @@ using Xunit;
 
 namespace VSRAD.DebugServerTests.Handlers
 {
-    public class PutDirectoryHandlerTest
+    public class PutFilesHandlerTest
     {
         [Fact]
         public async Task SuccessTestAsync()
@@ -17,20 +18,20 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var files = new[]
             {
-                new PackedFile(new byte[] { 0x4C }, "test", new DateTime(1998, 07, 06, 0, 0, 0, DateTimeKind.Utc)),
-                new PackedFile(new byte[] { 0x4C, 0x41, 0x49 }, "dir/test", new DateTime(1998, 07, 13, 0, 0, 0, DateTimeKind.Utc)),
-                new PackedFile(new byte[] { 0x4E }, "nested/dir/test", new DateTime(1998, 07, 20, 0, 0, 0, DateTimeKind.Utc)),
-                new PackedFile(Array.Empty<byte>(), "empty/dir/", new DateTime(1998, 07, 27, 0, 0, 0, DateTimeKind.Utc)),
+                new PackedFile("test", new DateTime(1998, 07, 06, 0, 0, 0, DateTimeKind.Utc), new byte[] { 0x4C }),
+                new PackedFile("dir/test", new DateTime(1998, 07, 13, 0, 0, 0, DateTimeKind.Utc), new byte[] { 0x4C, 0x41, 0x49 }),
+                new PackedFile("nested/dir/test", new DateTime(1998, 07, 20, 0, 0, 0, DateTimeKind.Utc), new byte[] { 0x4E }),
+                new PackedFile("empty/dir/", new DateTime(1998, 07, 27, 0, 0, 0, DateTimeKind.Utc), Array.Empty<byte>()),
             };
 
-            var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
+            var response = await Helper.DispatchCommandAsync<PutFilesCommand, PutFilesResponse>(new PutFilesCommand
             {
                 Files = files,
-                Path = tmpPath,
+                RootPath = tmpPath,
                 PreserveTimestamps = true
             });
 
-            Assert.Equal(PutDirectoryStatus.Successful, response.Status);
+            Assert.Equal(PutFilesStatus.Successful, response.Status);
 
             Assert.True(File.Exists(Path.Combine(tmpPath, "test")));
             Assert.Equal(new byte[] { 0x4C }, File.ReadAllBytes(Path.Combine(tmpPath, "test")));
@@ -51,19 +52,19 @@ namespace VSRAD.DebugServerTests.Handlers
         }
 
         [Fact]
-        public async Task TargetPathIsFileTestAsync()
+        public async Task SingleFileTestAsync()
         {
             var tmpPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             File.WriteAllText(tmpPath, "existing file");
 
-            var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
+            var response = await Helper.DispatchCommandAsync<PutFilesCommand, PutFilesResponse>(new PutFilesCommand
             {
-                Files = Array.Empty<PackedFile>(),
-                Path = tmpPath
+                Files = new[] { new PackedFile("", default, Encoding.UTF8.GetBytes("copied file")) },
+                RootPath = tmpPath
             });
 
-            Assert.Equal(PutDirectoryStatus.TargetPathIsFile, response.Status);
-            Assert.Equal("existing file", File.ReadAllText(tmpPath));
+            Assert.Equal(PutFilesStatus.Successful, response.Status);
+            Assert.Equal("copied file", File.ReadAllText(tmpPath));
 
             File.Delete(tmpPath);
         }
@@ -76,18 +77,37 @@ namespace VSRAD.DebugServerTests.Handlers
             File.WriteAllText(Path.Combine(tmpPath, "test"), "read only");
             File.SetAttributes(Path.Combine(tmpPath, "test"), FileAttributes.ReadOnly);
 
-            var files = new[] { new PackedFile(new byte[] { 0x48 }, "test", new DateTime(2002, 10, 09, 0, 0, 0, DateTimeKind.Utc)) };
+            var files = new[] { new PackedFile("test", new DateTime(2002, 10, 09, 0, 0, 0, DateTimeKind.Utc), new byte[] { 0x48 }) };
 
-            var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
+            var response = await Helper.DispatchCommandAsync<PutFilesCommand, PutFilesResponse>(new PutFilesCommand
             {
                 Files = files,
-                Path = tmpPath
+                RootPath = tmpPath
             });
 
-            Assert.Equal(PutDirectoryStatus.PermissionDenied, response.Status);
+            Assert.Equal(PutFilesStatus.PermissionDenied, response.Status);
 
             File.SetAttributes(Path.Combine(tmpPath, "test"), FileAttributes.Normal);
             Directory.Delete(tmpPath, recursive: true);
+        }
+
+        [Fact]
+        public async Task IOErrorTestAsync()
+        {
+            var tmpPath = Path.GetTempFileName();
+
+            using (var fs = new FileStream(tmpPath, FileMode.Open))
+            {
+                var files = new[] { new PackedFile(Path.GetFileName(tmpPath), new DateTime(2004, 04, 11, 0, 0, 0, DateTimeKind.Utc), new byte[] { 0x48 }) };
+                var response = await Helper.DispatchCommandAsync<PutFilesCommand, PutFilesResponse>(new PutFilesCommand
+                {
+                    Files = files,
+                    RootPath = Path.GetDirectoryName(tmpPath)
+                });
+                Assert.Equal(PutFilesStatus.OtherIOError, response.Status);
+            }
+
+            File.Delete(tmpPath);
         }
     }
 }

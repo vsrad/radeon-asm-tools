@@ -42,17 +42,14 @@ namespace VSRAD.PackageTests
                 .Setup((c) => c.SendWithReplyAsync<ResultRangeFetched>(It.IsAny<FetchResultRange>(), It.IsAny<CancellationToken>()))
                 .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((ResultRangeFetched)HandleCommand(c)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<PutFileResponse>(It.IsAny<PutFileCommand>(), It.IsAny<CancellationToken>()))
-                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((PutFileResponse)HandleCommand(c)));
-            _mock
-                .Setup((c) => c.SendWithReplyAsync<PutDirectoryResponse>(It.IsAny<PutDirectoryCommand>(), It.IsAny<CancellationToken>()))
-                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((PutDirectoryResponse)HandleCommand(c)));
-            _mock
                 .Setup((c) => c.SendWithReplyAsync<ListFilesResponse>(It.IsAny<ListFilesCommand>(), It.IsAny<CancellationToken>()))
                 .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((ListFilesResponse)HandleCommand(c)));
             _mock
                 .Setup((c) => c.SendWithReplyAsync<GetFilesResponse>(It.IsAny<GetFilesCommand>(), It.IsAny<CancellationToken>()))
                 .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((GetFilesResponse)HandleCommand(c)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<PutFilesResponse>(It.IsAny<PutFilesCommand>(), It.IsAny<CancellationToken>()))
+                .Returns<ICommand, CancellationToken>((c, token) => Task.FromResult((PutFilesResponse)HandleCommand(c)));
         }
 
         public void ThenRespond<TCommand, TResponse>(TResponse response, Action<TCommand> processCallback)

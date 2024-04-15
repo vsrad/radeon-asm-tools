@@ -19,12 +19,12 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
-                Path = tmpPath,
-                IncludeSubdirectories = true
+                RootPath = tmpPath,
+                Globs = Array.Empty<string>()
             });
 
             Assert.Single(response.Files);
-            Assert.Equal(new FileMetadata(".", 5, DateTime.FromFileTimeUtc(1)), response.Files[0]);
+            Assert.Equal(new FileMetadata("", 5, DateTime.FromFileTimeUtc(1)), response.Files[0]);
 
             File.Delete(tmpPath);
         }
@@ -51,8 +51,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
-                Path = tmpPath,
-                IncludeSubdirectories = true
+                RootPath = tmpPath,
+                Globs = new[] { @"**\*" }
             });
 
             Assert.Equal(7, response.Files.Length);
@@ -62,12 +62,12 @@ namespace VSRAD.DebugServerTests.Handlers
             Assert.True(response.Files[1].IsDirectory);
             Assert.Equal(new FileMetadata("b/", 0, DateTime.FromFileTimeUtc(3)), response.Files[2]);
             Assert.True(response.Files[2].IsDirectory);
-            Assert.Equal(new FileMetadata("t", 4, DateTime.FromFileTimeUtc(4)), response.Files[3]);
-            Assert.False(response.Files[3].IsDirectory);
-            Assert.Equal(new FileMetadata("a/t", 3, DateTime.FromFileTimeUtc(5)), response.Files[4]);
+            Assert.Equal(new FileMetadata("b/c/", 0, DateTime.FromFileTimeUtc(6)), response.Files[3]);
+            Assert.True(response.Files[3].IsDirectory);
+            Assert.Equal(new FileMetadata("t", 4, DateTime.FromFileTimeUtc(4)), response.Files[4]);
             Assert.False(response.Files[4].IsDirectory);
-            Assert.Equal(new FileMetadata("b/c/", 0, DateTime.FromFileTimeUtc(6)), response.Files[5]);
-            Assert.True(response.Files[5].IsDirectory);
+            Assert.Equal(new FileMetadata("a/t", 3, DateTime.FromFileTimeUtc(5)), response.Files[5]);
+            Assert.False(response.Files[5].IsDirectory);
             Assert.Equal(new FileMetadata("b/c/t", 1, DateTime.FromFileTimeUtc(7)), response.Files[6]);
             Assert.False(response.Files[6].IsDirectory);
 
@@ -90,8 +90,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
-                Path = tmpPath + "\\",
-                IncludeSubdirectories = false
+                RootPath = tmpPath + "\\",
+                Globs = new[] { "*" }
             });
 
             Assert.Equal(2, response.Files.Length);
@@ -109,8 +109,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
-                Path = tmpPath,
-                IncludeSubdirectories = true
+                RootPath = tmpPath,
+                Globs = new[] { @"**\*" }
             });
 
             Assert.Empty(response.Files);

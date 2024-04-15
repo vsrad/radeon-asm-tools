@@ -14,12 +14,11 @@ namespace VSRAD.DebugServer
             Execute e => new ExecuteHandler(e, clientLog).RunAsync(),
             FetchMetadata fm => new FetchMetadataHandler(fm).RunAsync(),
             FetchResultRange frr => new FetchResultRangeHandler(frr).RunAsync(),
-            PutFileCommand pf => new PutFileHandler(pf).RunAsync(),
-            PutDirectoryCommand pd => new PutDirectoryHandler(pd).RunAsync(),
+            ListEnvironmentVariables lev => new ListEnvironmentVariablesHandler(lev).RunAsync(),
             ListFilesCommand lf => new ListFilesHandler(lf).RunAsync(),
             GetFilesCommand gf => new GetFilesHandler(gf).RunAsync(),
+            PutFilesCommand pf => new PutFilesHandler(pf).RunAsync(),
             ExchangeVersionsCommand ev => new ExchangeVersionsHandler(ev).RunAsync(),
-            ListEnvironmentVariables lev => new ListEnvironmentVariablesHandler(lev).RunAsync(),
             _ => throw new ArgumentException($"Unknown command type {command.GetType()}"),
         };
     }

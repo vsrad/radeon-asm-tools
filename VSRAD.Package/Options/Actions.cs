@@ -108,59 +108,60 @@ namespace VSRAD.Package.Options
         private string _targetPath = "";
         public string TargetPath { get => _targetPath; set => SetField(ref _targetPath, value); }
 
-        private ActionIfNotModified _ifNotModified;
-        public ActionIfNotModified IfNotModified { get => _ifNotModified; set => SetField(ref _ifNotModified, value); }
+        private string _globsToCopy = "*";
+        public string GlobsToCopy { get => _globsToCopy; set => SetField(ref _globsToCopy, value); }
+
+        private bool _skipIfNotModified;
+        public bool SkipIfNotModified { get => _skipIfNotModified; set => SetField(ref _skipIfNotModified, value); }
 
         private bool _preserveTimestamps;
         public bool PreserveTimestamps { get => _preserveTimestamps; set => SetField(ref _preserveTimestamps, value); }
 
-        private bool _includeSubdirectories;
-        public bool IncludeSubdirectories { get => _includeSubdirectories; set => SetField(ref _includeSubdirectories, value); }
-
         private bool _useCompression;
         public bool UseCompression { get => _useCompression; set => SetField(ref _useCompression, value); }
+
+        [JsonIgnore]
+        public string[] GlobsToCopyArray => GlobsToCopy.Split(';');
 
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
                 return "Copy";
 
-            var dir = Direction == CopyDirection.LocalToRemote ? "to Remote"
-                    : Direction == CopyDirection.RemoteToLocal ? "from Remote"
-                    : "Local";
+            var direction = Direction == CopyDirection.LocalToRemote ? "to Remote"
+                          : Direction == CopyDirection.RemoteToLocal ? "from Remote"
+                          : "Local";
 
-            return $"Copy {dir} {SourcePath} -> {TargetPath}";
+            return $"Copy {direction} {GlobsToCopy}";
         }
 
         public override bool Equals(object obj) =>
             obj is CopyStep step &&
             SourcePath == step.SourcePath &&
             TargetPath == step.TargetPath &&
-            IfNotModified == step.IfNotModified &&
+            GlobsToCopy == step.GlobsToCopy &&
+            SkipIfNotModified == step.SkipIfNotModified &&
             PreserveTimestamps == step.PreserveTimestamps &&
-            IncludeSubdirectories == step.IncludeSubdirectories &&
             UseCompression == step.UseCompression;
 
         public override int GetHashCode() => 1;
 
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationTransients transients, string sourceAction)
         {
-            if (string.IsNullOrWhiteSpace(SourcePath))
-                return EvaluationError(sourceAction, "Copy", "No source path specified");
-            if (string.IsNullOrWhiteSpace(TargetPath))
-                return EvaluationError(sourceAction, "Copy", "No target path specified");
-
             var sourcePathResult = await evaluator.EvaluateAsync(SourcePath);
             if (!sourcePathResult.TryGetResult(out var evaluatedSourcePath, out var error))
                 return EvaluationError(sourceAction, "Copy", error.Message);
             var targetPathResult = await evaluator.EvaluateAsync(TargetPath);
             if (!targetPathResult.TryGetResult(out var evaluatedTargetPath, out error))
                 return EvaluationError(sourceAction, "Copy", error.Message);
+            var globsToCopyResult = await evaluator.EvaluateAsync(GlobsToCopy);
+            if (!globsToCopyResult.TryGetResult(out var evaluatedGlobsToCopy, out error))
+                return EvaluationError(sourceAction, "Copy", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedSourcePath))
-                return EvaluationError(sourceAction, "Copy", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
+                return EvaluationError(sourceAction, "Copy", "The source path evaluates to an empty string");
             if (string.IsNullOrWhiteSpace(evaluatedTargetPath))
-                return EvaluationError(sourceAction, "Copy", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
+                return EvaluationError(sourceAction, "Copy", "The target path evaluates to an empty string");
 
             var direction = transients.RunActionsLocally ? CopyDirection.LocalToLocal : Direction;
 
@@ -176,9 +177,9 @@ namespace VSRAD.Package.Options
                 Direction = direction,
                 SourcePath = evaluatedSourcePath,
                 TargetPath = evaluatedTargetPath,
-                IfNotModified = IfNotModified,
+                GlobsToCopy = evaluatedGlobsToCopy,
+                SkipIfNotModified = SkipIfNotModified,
                 PreserveTimestamps = PreserveTimestamps,
-                IncludeSubdirectories = IncludeSubdirectories,
                 UseCompression = UseCompression
             };
         }

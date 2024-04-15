@@ -14,11 +14,10 @@ namespace VSRAD.DebugServer.IPC.Responses
         MetadataFetched = 1,
         ResultRangeFetched = 2,
         EnvironmentVariablesListed = 3,
-        PutFile = 4,
-        PutDirectory = 5,
-        ListFiles = 6,
-        GetFiles = 7,
-        ExchangeVersions = 8,
+        ListFiles = 4,
+        GetFiles = 5,
+        PutFiles = 6,
+        ExchangeVersions = 7,
 
         CompressedResponse = 0xFF
     }
@@ -40,15 +39,14 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.MetadataFetched: return MetadataFetched.Deserialize(reader);
                 case ResponseType.ResultRangeFetched: return ResultRangeFetched.Deserialize(reader);
                 case ResponseType.EnvironmentVariablesListed: return EnvironmentVariablesListed.Deserialize(reader);
-                case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
-                case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
                 case ResponseType.GetFiles: return GetFilesResponse.Deserialize(reader);
+                case ResponseType.PutFiles: return PutFilesResponse.Deserialize(reader);
                 case ResponseType.ExchangeVersions: return ExchangeVersionsResponse.Deserialize(reader);
 
                 case ResponseType.CompressedResponse: return CompressedResponse.Deserialize(reader);
+                default: throw new InvalidDataException($"Unexpected response type byte: {type}");
             }
-            throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
 
         public static void WriteResponse(this IPCWriter writer, IResponse response)
@@ -60,10 +58,9 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case MetadataFetched _: type = ResponseType.MetadataFetched; break;
                 case ResultRangeFetched _: type = ResponseType.ResultRangeFetched; break;
                 case EnvironmentVariablesListed _: type = ResponseType.EnvironmentVariablesListed; break;
-                case PutFileResponse _: type = ResponseType.PutFile; break;
-                case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 case GetFilesResponse _: type = ResponseType.GetFiles; break;
+                case PutFilesResponse _: type = ResponseType.PutFiles; break;
                 case ExchangeVersionsResponse _: type = ResponseType.ExchangeVersions; break;
 
                 case CompressedResponse _: type = ResponseType.CompressedResponse; break;
@@ -177,48 +174,6 @@ namespace VSRAD.DebugServer.IPC.Responses
         }
     }
 
-    public sealed class PutFileResponse : IResponse
-    {
-        public PutFileStatus Status { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[]
-        {
-            "PutFileResponse",
-            $"Status = {Status}",
-        });
-
-        public static PutFileResponse Deserialize(IPCReader reader) => new PutFileResponse
-        {
-            Status = (PutFileStatus)reader.ReadByte()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.Write((byte)Status);
-        }
-    }
-
-    public sealed class PutDirectoryResponse : IResponse
-    {
-        public PutDirectoryStatus Status { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[]
-        {
-            "PutDirectoryResponse",
-            $"Status = {Status}",
-        });
-
-        public static PutDirectoryResponse Deserialize(IPCReader reader) => new PutDirectoryResponse
-        {
-            Status = (PutDirectoryStatus)reader.ReadByte()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.Write((byte)Status);
-        }
-    }
-
     public sealed class ListFilesResponse : IResponse
     {
         public FileMetadata[] Files { get; set; }
@@ -254,24 +209,53 @@ namespace VSRAD.DebugServer.IPC.Responses
     {
         public GetFilesStatus Status { get; set; }
         public PackedFile[] Files { get; set; } = Array.Empty<PackedFile>();
+        public string ErrorMessage { get; set; } = "";
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "GetFilesResponse",
             $"Status = {Status}",
             $"Files = <{Files.Length} files>",
+            $"ErrorMessage = {ErrorMessage}",
         });
 
         public static GetFilesResponse Deserialize(IPCReader reader) => new GetFilesResponse
         {
             Status = (GetFilesStatus)reader.ReadByte(),
-            Files = reader.ReadLengthPrefixedFileArray()
+            Files = reader.ReadLengthPrefixedFileArray(),
+            ErrorMessage = reader.ReadString()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
             writer.WriteLengthPrefixedFileArray(Files);
+            writer.Write(ErrorMessage);
+        }
+    }
+
+    public sealed class PutFilesResponse : IResponse
+    {
+        public PutFilesStatus Status { get; set; }
+        public string ErrorMessage { get; set; } = "";
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "PutFileResponse",
+            $"Status = {Status}",
+            $"ErrorMessage = {ErrorMessage}",
+        });
+
+        public static PutFilesResponse Deserialize(IPCReader reader) => new PutFilesResponse
+        {
+            Status = (PutFilesStatus)reader.ReadByte(),
+            ErrorMessage = reader.ReadString()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+            writer.Write(ErrorMessage);
         }
     }
 
@@ -376,27 +360,19 @@ namespace VSRAD.DebugServer.IPC.Responses
         FileNotFound = 1
     }
 
-    public enum PutFileStatus : byte
+    public enum GetFilesStatus : byte
+    {
+        Successful = 0,
+        FileOrDirectoryNotFound = 1,
+        PermissionDenied = 2,
+        OtherIOError = 3
+    }
+
+    public enum PutFilesStatus : byte
     {
         Successful = 0,
         PermissionDenied = 1,
         OtherIOError = 2
-    }
-
-    public enum PutDirectoryStatus : byte
-    {
-        Successful = 0,
-        PermissionDenied = 1,
-        TargetPathIsFile = 2,
-        OtherIOError = 3
-    }
-
-    public enum GetFilesStatus : byte
-    {
-        Successful = 0,
-        FileNotFound = 1,
-        PermissionDenied = 2,
-        OtherIOError = 3
     }
 
     public enum ExchangeVersionsStatus : byte

@@ -7,15 +7,23 @@ namespace VSRAD.DebugServer.SharedUtils
 {
     public readonly struct PackedFile : IEquatable<PackedFile>
     {
-        public byte[] Data { get; }
+        /// <summary>
+        /// See <see cref="FileMetadata.RelativePath"/>.
+        /// </summary>
         public string RelativePath { get; }
         public DateTime LastWriteTimeUtc { get; }
+        /// <summary>
+        /// Empty if the path refers to a directory.
+        /// </summary>
+        public byte[] Data { get; }
 
-        public PackedFile(byte[] data, string relativePath, DateTime lastWriteTimeUtc)
+        public bool IsDirectory => RelativePath.EndsWith("/", StringComparison.Ordinal);
+
+        public PackedFile(string relativePath, DateTime lastWriteTimeUtc, byte[] data)
         {
-            Data = data;
             RelativePath = relativePath;
             LastWriteTimeUtc = lastWriteTimeUtc;
+            Data = data;
         }
 
         public static PackedFile[] PackFiles(string workDir, IEnumerable<string> paths)
@@ -26,14 +34,9 @@ namespace VSRAD.DebugServer.SharedUtils
                 {
                     var fullPath = Path.Combine(workDir, path);
                     if (path.EndsWith("/", StringComparison.Ordinal))
-                    {
-                        return new PackedFile(Array.Empty<byte>(), path, Directory.GetLastWriteTimeUtc(fullPath));
-                    }
+                        return new PackedFile(path, Directory.GetLastWriteTimeUtc(fullPath), Array.Empty<byte>());
                     else
-                    {
-                        var lastWriteTime = File.GetLastWriteTimeUtc(fullPath);
-                        return new PackedFile(File.ReadAllBytes(fullPath), path, lastWriteTime);
-                    }
+                        return new PackedFile(path, File.GetLastWriteTimeUtc(fullPath), File.ReadAllBytes(fullPath));
                 }).ToArray();
             }
             catch (AggregateException e)
@@ -42,28 +45,27 @@ namespace VSRAD.DebugServer.SharedUtils
             }
         }
 
-        public static void UnpackFiles(string path, IEnumerable<PackedFile> files, bool preserveTimestamps)
+        public static void UnpackFiles(string rootPath, IEnumerable<PackedFile> files, bool preserveTimestamps)
         {
-            var destination = Directory.CreateDirectory(path);
-
             try
             {
                 files.AsParallel().ForAll(file =>
                 {
-                    var entryDestPath = Path.Combine(destination.FullName, file.RelativePath);
-
-                    if (file.RelativePath.EndsWith("/", StringComparison.Ordinal))
+                    var fullPath = Path.Combine(rootPath, file.RelativePath);
+                    if (file.IsDirectory)
                     {
-                        Directory.CreateDirectory(entryDestPath);
+                        Directory.CreateDirectory(fullPath);
                         if (preserveTimestamps)
-                            Directory.SetLastWriteTimeUtc(entryDestPath, file.LastWriteTimeUtc);
+                            Directory.SetLastWriteTimeUtc(fullPath, file.LastWriteTimeUtc);
                     }
                     else
                     {
-                        Directory.CreateDirectory(Path.GetDirectoryName(entryDestPath));
-                        File.WriteAllBytes(entryDestPath, file.Data);
+                        var parentDir = Path.GetDirectoryName(fullPath);
+                        if (parentDir.Length != 0)
+                            Directory.CreateDirectory(parentDir);
+                        File.WriteAllBytes(fullPath, file.Data);
                         if (preserveTimestamps)
-                            File.SetLastWriteTimeUtc(entryDestPath, file.LastWriteTimeUtc);
+                            File.SetLastWriteTimeUtc(fullPath, file.LastWriteTimeUtc);
                     }
                 });
             }

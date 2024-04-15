@@ -66,8 +66,8 @@ namespace VSRAD.Package.Server
                 StepResult result;
                 switch (steps[i])
                 {
-                    case CopyStep copyFile:
-                        result = await DoCopyFileAsync(copyFile, cancellationToken);
+                    case CopyStep copy:
+                        result = await DoCopyAsync(copy, cancellationToken);
                         break;
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute, cancellationToken);
@@ -96,66 +96,43 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<StepResult> DoCopyFileAsync(CopyStep step, CancellationToken cancellationToken)
+        private async Task<StepResult> DoCopyAsync(CopyStep step, CancellationToken cancellationToken)
         {
             // Fast path for RemoteToLocal or LocalToRemote copies that are forced to LocalToLocal copies by the "Run on Localhost" option
             if (step.Direction == CopyDirection.LocalToLocal && step.SourcePath == step.TargetPath)
             {
-                return new StepResult(true, "", "No files copied. The source and target locations are identical.\r\n");
+                return new StepResult(true, "", "Copy skipped. The source and target locations are identical.\r\n");
             }
             IList<FileMetadata> sourceFiles, targetFiles;
-            // List all source files
+            // List source files
             if (step.Direction == CopyDirection.RemoteToLocal)
             {
-                var command = new ListFilesCommand { Path = step.SourcePath, IncludeSubdirectories = step.IncludeSubdirectories };
+                var command = new ListFilesCommand { RootPath = step.SourcePath, Globs = step.GlobsToCopyArray };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, cancellationToken);
                 sourceFiles = response.Files;
             }
             else
             {
-                if (!TryGetMetadataForLocalPath(step.SourcePath, step.IncludeSubdirectories, out sourceFiles, out var error))
+                if (!TryCollectMetadataForLocalPath(step.SourcePath, step.GlobsToCopyArray, out sourceFiles, out var error))
                     return new StepResult(false, error, "");
             }
             if (sourceFiles.Count == 0)
             {
-                return new StepResult(false, $"File or directory not found. The source path is missing on the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
+                return new StepResult(false, $"The source file or directory is missing on the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} machine at {step.SourcePath}", "");
             }
-            // List all target files
+            // List target files
             if (step.Direction == CopyDirection.LocalToRemote)
             {
-                var command = new ListFilesCommand { Path = step.TargetPath, IncludeSubdirectories = step.IncludeSubdirectories };
+                var command = new ListFilesCommand { RootPath = step.TargetPath, Globs = step.GlobsToCopyArray };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, cancellationToken);
                 targetFiles = response.Files;
             }
             else
             {
-                if (!TryGetMetadataForLocalPath(step.TargetPath, step.IncludeSubdirectories, out targetFiles, out var error))
+                if (!TryCollectMetadataForLocalPath(step.TargetPath, step.GlobsToCopyArray, out targetFiles, out var error))
                     return new StepResult(false, error, "");
             }
-            // Copying one file?
-            if (sourceFiles.Count == 1 && !sourceFiles[0].IsDirectory)
-            {
-                if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
-                    return new StepResult(false, $"File cannot be copied. The target path is a directory: {step.SourcePath}", "");
-
-                if (step.IfNotModified == ActionIfNotModified.Fail && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"File is stale. The source path was not modified on the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} machine: {step.SourcePath}", "");
-
-                if (step.IfNotModified == ActionIfNotModified.DoNotCopy
-                    && targetFiles.Count == 1
-                    && sourceFiles[0].Size == targetFiles[0].Size
-                    && sourceFiles[0].LastWriteTimeUtc == targetFiles[0].LastWriteTimeUtc)
-                    return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
-
-                return await DoCopySingleFileAsync(step, cancellationToken);
-            }
-            // Copying a directory?
-            return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles, cancellationToken);
-        }
-
-        private async Task<StepResult> DoCopyDirectoryAsync(CopyStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles, CancellationToken cancellationToken)
-        {
-            // Retrieve source files
+            // Get source file contents
             var files = new List<PackedFile>();
             bool SourceIdenticalToTarget(FileMetadata src)
             {
@@ -169,113 +146,57 @@ namespace VSRAD.Package.Server
             var filesToGet = new List<string>();
             foreach (var src in sourceFiles)
             {
-                if (!src.IsDirectory && !(step.IfNotModified == ActionIfNotModified.DoNotCopy && SourceIdenticalToTarget(src)))
-                    filesToGet.Add(src.RelativePath);
-            }
-            if (filesToGet.Count > 0)
-            {
-                if (step.Direction == CopyDirection.RemoteToLocal)
+                if (src.IsDirectory)
                 {
-                    var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
-                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command, cancellationToken);
-                    if (response.Status == GetFilesStatus.FileNotFound)
-                        return new StepResult(false, $"Failed to read remote directory. No entries found at {step.SourcePath}", "Files requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
-                    if (response.Status == GetFilesStatus.PermissionDenied)
-                        return new StepResult(false, $"Failed to read remote directory. Access is denied to {step.SourcePath}", "Files requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
-                    if (response.Status == GetFilesStatus.OtherIOError)
-                        return new StepResult(false, $"Failed to read remote directory at {step.TargetPath}", "Files requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
-
-                    files.AddRange(response.Files);
+                    // ./ indicates the root directory
+                    if (src.RelativePath != "./" && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
+                        files.Add(new PackedFile(src.RelativePath, src.LastWriteTimeUtc, Array.Empty<byte>()));
                 }
                 else
                 {
-                    files.AddRange(PackedFile.PackFiles(step.SourcePath, filesToGet));
+                    if (!(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
+                        filesToGet.Add(src.RelativePath);
                 }
             }
-            // Include empty directories
-            foreach (var src in sourceFiles)
+            if (filesToGet.Count > 0)
             {
-                // ./ indicates the root directory
-                if (src.IsDirectory && src.RelativePath != "./" && !(step.IfNotModified == ActionIfNotModified.DoNotCopy && SourceIdenticalToTarget(src)))
-                    files.Add(new PackedFile(Array.Empty<byte>(), src.RelativePath, src.LastWriteTimeUtc));
+                var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
+                GetFilesResponse response;
+                if (step.Direction == CopyDirection.RemoteToLocal)
+                    response = await _channel.SendWithReplyAsync<GetFilesResponse>(command, cancellationToken);
+                else
+                    response = FileTransfer.GetFiles(command);
+
+                if (response.Status == GetFilesStatus.Successful)
+                    files.AddRange(response.Files);
+                else if (response.Status == GetFilesStatus.FileOrDirectoryNotFound)
+                    return new StepResult(false, $"Failed to find the requested files on the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} machine. {response.ErrorMessage}", "");
+                else if (response.Status == GetFilesStatus.PermissionDenied)
+                    return new StepResult(false, $"Failed to access the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} source path. {response.ErrorMessage}", "");
+                else
+                    return new StepResult(false, $"Failed to read file(s) from the {(step.Direction == CopyDirection.RemoteToLocal ? "remote" : "local")} source path. {response.ErrorMessage}", "");
             }
             // Write source files and directories to the target directory
-            if (files.Count == 0)
+            if (files.Count > 0)
             {
-                return new StepResult(true, "", "No files copied. The source and target sizes and modification times are identical.\r\n");
-            }
-            if (step.Direction == CopyDirection.LocalToRemote)
-            {
-                ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
-                if (step.UseCompression)
-                    command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command, cancellationToken);
-                if (response.Status == PutDirectoryStatus.TargetPathIsFile)
-                    return new StepResult(false, $"Failed to copy files to remote directory. The target path is a file: {step.SourcePath}", "");
-                if (response.Status == PutDirectoryStatus.PermissionDenied)
-                    return new StepResult(false, $"Failed to copy files to remote directory. Access is denied to {step.TargetPath}. Make sure that the path is accessible and not marked as read-only.", "");
-                if (response.Status == PutDirectoryStatus.OtherIOError)
-                    return new StepResult(false, $"Failed to copy files to remote directory {step.TargetPath}", "");
+                var command = new PutFilesCommand { Files = files.ToArray(), RootPath = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
+                PutFilesResponse response;
+                if (step.Direction == CopyDirection.LocalToRemote)
+                    response = await _channel.SendWithReplyAsync<PutFilesResponse>(step.UseCompression ? new CompressedCommand(command) : (ICommand)command, cancellationToken);
+                else
+                    response = await FileTransfer.PutFilesAsync(command);
+
+                if (response.Status == PutFilesStatus.Successful)
+                    return new StepResult(true, "", "");
+                else if (response.Status == PutFilesStatus.PermissionDenied)
+                    return new StepResult(false, $"Failed to access the {(step.Direction == CopyDirection.LocalToRemote ? "remote" : "local")} target path. {response.ErrorMessage} Make sure that the path is not marked as read-only.", "");
+                else
+                    return new StepResult(false, $"Failed to write file(s) to the {(step.Direction == CopyDirection.LocalToRemote ? "remote" : "local")} target path. {response.ErrorMessage}", "");
             }
             else
             {
-                if (File.Exists(step.TargetPath))
-                {
-                    return new StepResult(false, $"Failed to copy files to local directory. The target path is a file: {step.SourcePath}", "");
-                }
-                try
-                {
-                    PackedFile.UnpackFiles(step.TargetPath, files, step.PreserveTimestamps);
-                }
-                catch (UnauthorizedAccessException e)
-                {
-                    return new StepResult(false, $"Failed to copy files to local directory {step.TargetPath}. {e.Message} Make sure that the path is accessible and not marked as read-only.", "");
-                }
-                catch (IOException e)
-                {
-                    return new StepResult(false, $"Failed to copy files to local directory {step.TargetPath}. {e.Message}", "");
-                }
+                return new StepResult(true, "", "Copy skipped. The source and target sizes and modification times are identical.\r\n");
             }
-
-            return new StepResult(true, "", "");
-        }
-
-        private async Task<StepResult> DoCopySingleFileAsync(CopyStep step, CancellationToken cancellationToken)
-        {
-            byte[] sourceContents;
-            // Read source file
-            if (step.Direction == CopyDirection.RemoteToLocal)
-            {
-                var command = new FetchResultRange { FilePath = step.SourcePath };
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command, cancellationToken);
-                if (response.Status == FetchStatus.FileNotFound)
-                    return new StepResult(false, $"File not found. Failed to read remote file {step.SourcePath}", "");
-                sourceContents = response.Data;
-            }
-            else
-            {
-                if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
-                    return new StepResult(false, error, "");
-            }
-            // Write target file
-            if (step.Direction == CopyDirection.LocalToRemote)
-            {
-                ICommand command = new PutFileCommand { FilePath = step.TargetPath, Data = sourceContents };
-                if (step.UseCompression)
-                    command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command, cancellationToken);
-                if (response.Status == PutFileStatus.PermissionDenied)
-                    return new StepResult(false, $"Access denied. Failed to write remote file {step.TargetPath}. Make sure that the path is accessible and not marked as read-only.", "");
-                if (response.Status == PutFileStatus.OtherIOError)
-                    return new StepResult(false, $"Failed to write remote file {step.TargetPath}", "");
-            }
-            else
-            {
-                if (!WriteLocalFile(step.TargetPath, sourceContents, out var error))
-                    return new StepResult(false, error, "");
-            }
-
-            return new StepResult(true, "", "");
         }
 
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step, CancellationToken cancellationToken)
@@ -487,7 +408,7 @@ namespace VSRAD.Package.Server
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access denied. Failed to write local file {fullPath}. Make sure that the path is accessible and not marked as read-only.";
+                error = $"Access denied. Failed to write local file {fullPath}. Make sure that the path is not marked as read-only.";
             }
             catch (IOException e)
             {
@@ -500,15 +421,7 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
-                if (step is CopyStep copyFile && copyFile.IfNotModified == ActionIfNotModified.Fail)
-                {
-                    if (copyFile.Direction == CopyDirection.RemoteToLocal)
-                        _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                            new FetchMetadata { FilePath = copyFile.SourcePath }, cancellationToken)).Timestamp;
-                    else
-                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
-                }
-                else if (step is ReadDebugDataStep readDebugData)
+                if (step is ReadDebugDataStep readDebugData)
                 {
                     var files = new[] { readDebugData.WatchesFile, readDebugData.DispatchParamsFile, readDebugData.OutputFile };
                     foreach (var file in files)
@@ -537,17 +450,17 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private static bool TryGetMetadataForLocalPath(string localPath, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
+        private static bool TryCollectMetadataForLocalPath(string localPath, string[] globs, out IList<FileMetadata> metadata, out string error)
         {
             try
             {
                 error = "";
-                metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
+                metadata = FileMetadata.CollectFileMetadata(localPath, globs);
                 return true;
             }
             catch (Exception e) when (e is UnauthorizedAccessException || e is IOException)
             {
-                error = $"Failed to access metadata for local path {localPath}. {e.Message}";
+                error = $"Failed to access local path {localPath}. {e.Message}";
                 metadata = null;
                 return false;
             }

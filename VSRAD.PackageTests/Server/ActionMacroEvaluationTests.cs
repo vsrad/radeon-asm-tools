@@ -71,20 +71,20 @@ namespace VSRAD.PackageTests.Server
 
             a.Steps.Add(new CopyStep { SourcePath = "", TargetPath = "target" });
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
-            Assert.Equal("No source path specified", error.Message);
+            Assert.Equal("The source path evaluates to an empty string", error.Message);
 
             ((CopyStep)a.Steps[0]).SourcePath = "$(MissingMacro)";
             Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), transients)).TryGetResult(out _, out error));
-            Assert.Equal("The specified source path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
+            Assert.Equal("The source path evaluates to an empty string", error.Message);
 
             ((CopyStep)a.Steps[0]).SourcePath = "source";
             ((CopyStep)a.Steps[0]).TargetPath = "";
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out error));
-            Assert.Equal("No target path specified", error.Message);
+            Assert.Equal("The target path evaluates to an empty string", error.Message);
 
             ((CopyStep)a.Steps[0]).TargetPath = "$(MissingMacro)";
             Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), transients)).TryGetResult(out _, out error));
-            Assert.Equal("The specified target path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
+            Assert.Equal("The target path evaluates to an empty string", error.Message);
         }
 
         [Fact]
@@ -204,11 +204,11 @@ namespace VSRAD.PackageTests.Server
 
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out var error));
             Assert.Equal(@"Copy step failed in ""C"" <- ""B"" <- ""A""", error.Title);
-            Assert.Equal(@"No source path specified", error.Message);
+            Assert.Equal(@"The source path evaluates to an empty string", error.Message);
 
             Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), transients)).TryGetResult(out _, out error));
             Assert.Equal(@"Copy step failed in ""C"" <- ""B""", error.Title);
-            Assert.Equal(@"No source path specified", error.Message);
+            Assert.Equal(@"The source path evaluates to an empty string", error.Message);
         }
 
         [Fact]
