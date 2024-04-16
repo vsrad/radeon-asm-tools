@@ -23,6 +23,19 @@ namespace VSRAD.Package.Utils
             return markers;
         }
 
+        public static IEnumerable<IVsWindowFrame> GetOpenEditorWindows(IServiceProvider serviceProvider)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            var uiShell = serviceProvider.GetService(typeof(SVsUIShell)) as IVsUIShell4;
+            Assumes.Present(uiShell);
+            var windowFlags = (uint)__WindowFrameTypeFlags.WINDOWFRAMETYPE_Document | (uint)__WindowFrameTypeFlags.WINDOWFRAMETYPE_AllStates;
+            ErrorHandler.ThrowOnFailure(uiShell.GetWindowEnum(windowFlags, out var windowEnum));
+            var pWindowFrame = new IVsWindowFrame[1];
+            while (windowEnum.Next(1, pWindowFrame, out var fetched) == VSConstants.S_OK && fetched == 1)
+                yield return pWindowFrame[0];
+        }
+
 #if VS2019
         private static readonly Type _sVsWindowManagerType = Type.GetType("Microsoft.Internal.VisualStudio.Shell.Interop.SVsWindowManager, Microsoft.VisualStudio.Platform.WindowManagement");
 #else

@@ -14,6 +14,7 @@ using VSRAD.Package.Commands;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Registry;
 using VSRAD.Package.ToolWindows;
+using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package
@@ -113,6 +114,8 @@ namespace VSRAD.Package
             SliceVisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             OptionsToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             FloatInspectorToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
+
+            await ApplyWorkaroundForErrorInMiscFilesAfterProjectLoadAsync();
         }
 
         public static void SolutionUnloaded()
@@ -149,6 +152,32 @@ namespace VSRAD.Package
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             return _commandRouter?.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut) ?? VSConstants.S_OK;
+        }
+
+        // After reloading the project, Visual Studio sometimes fails to open files located outside the project tree:
+        // * https://developercommunity.visualstudio.com/t/VS-fails-to-reopen-a-file-in-MiscFiles/10439129
+        // * https://developercommunity.visualstudio.com/t/An-error-occurred-in-Miscellaneous-File/10316041
+        // To reproduce, edit the .vcxproj file while the project is open in VS, go back to VS and click "Reload All". Repeat if necessary.
+        // This can be detected programmatically by iterating over EnvDTE.Documents: when the errors are present, this results in E_FAIL.
+        // As a workaround, we can force the documents to load properly by walking editor windows and calling OpenDocument on each of them.
+        // Unfortunately, this has the side effect of resetting tab groups, but it still seems better than having to close and reopen each file manually.
+        private async Task ApplyWorkaroundForErrorInMiscFilesAfterProjectLoadAsync()
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
+            var dte = (DTE2)await GetServiceAsync(typeof(DTE));
+            try
+            {
+                foreach (Document document in dte.Documents) { }
+            }
+            catch (COMException documentLoadExc) when (documentLoadExc.HResult == VSConstants.E_FAIL)
+            {
+                foreach (var documentWindow in VsEditor.GetOpenEditorWindows(this))
+                {
+                    var documentPath = (string)((dynamic)documentWindow).EffectiveDocumentMoniker;
+                    if (!string.IsNullOrEmpty(documentPath))
+                        VsShellUtilities.OpenDocument(this, documentPath);
+                }
+            }
         }
     }
 }
