@@ -124,13 +124,15 @@ namespace VSRAD.Package.Commands
                 try
                 {
                     var unevaluatedDefaultProcessor = _project.Options.Profile.General.DefaultTargetProcessor;
-                    var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
-                        ? null
+                    var runActionsLocally = _project.Options.Profile.General.RunActionsLocally;
+                    var remoteEnvironment = runActionsLocally ? null
                         : new AsyncLazy<IReadOnlyDictionary<string, string>>(() => _channel.GetRemoteEnvironmentAsync(default), ThreadHelper.JoinableTaskFactory);
+                    var remotePlatform = new AsyncLazy<OSPlatform>(
+                        () => runActionsLocally ? Task.FromResult(OSPlatform.Windows) : _channel.GetRemotePlatformAsync(default), ThreadHelper.JoinableTaskFactory);
                     var evaluator = new MacroEvaluator(
                         projectProperties: _project.GetProjectProperties(),
-                        transientValues: new MacroEvaluatorTransientValues(0, "", "", "", "", ""),
-                        remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
+                        transientValues: MacroEvaluatorTransientValues.Empty,
+                        remoteEnvironment, remotePlatform, _project.Options.DebuggerOptions, _project.Options.Profile);
                     var evaluated = await evaluator.EvaluateAsync(unevaluatedDefaultProcessor);
                     if (!evaluated.TryGetResult(out _autoSelectedTargetProcessor, out _))
                         _autoSelectedTargetProcessor = null;

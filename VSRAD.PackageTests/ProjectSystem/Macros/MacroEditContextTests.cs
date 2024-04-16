@@ -1,9 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Moq;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -29,6 +27,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             var evaluator = new MacroEvaluator(props.Object,
                 new MacroEvaluatorTransientValues(0, @"I:\C\ftg"),
                 MacroEvaluatorTests.EmptyRemoteEnv,
+                MacroEvaluatorTests.RemotePlatformWin,
                 new DebuggerOptions(), profile);
             var context = new MacroEditContext("A", "$(B)", evaluator);
 
@@ -53,6 +52,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             var evaluator = new MacroEvaluator(props.Object,
                 new MacroEvaluatorTransientValues(0, @"I:\C\ftg"),
                 MacroEvaluatorTests.EmptyRemoteEnv,
+                MacroEvaluatorTests.RemotePlatformWin,
                 new DebuggerOptions(), profile);
             var context = new MacroEditContext("A", "$(B)", evaluator);
 

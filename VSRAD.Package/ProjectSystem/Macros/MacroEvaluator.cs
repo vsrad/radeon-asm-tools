@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -13,6 +14,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
 {
     public sealed class MacroEvaluatorTransientValues
     {
+        public static readonly MacroEvaluatorTransientValues Empty =
+            new MacroEvaluatorTransientValues(0, "", "", "", "", "");
+
         public string ActiveSourceFullPath { get; }
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
@@ -56,6 +60,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string DebugBreakArgs = "RadDebugBreakArgs";
         public const string DebugStartupPath = "RadDebugStartupPath";
         public const string TargetProcessor = "RadTargetProcessor";
+        public const string RemotePlatform = "RadRemotePlatform";
     }
 
     public interface IMacroEvaluator
@@ -73,6 +78,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private readonly IProjectProperties _projectProperties;
         private readonly MacroEvaluatorTransientValues _transientValues;
         private readonly AsyncLazy<IReadOnlyDictionary<string, string>> _remoteEnvironment;
+        private readonly AsyncLazy<OSPlatform> _remotePlaftorm;
 
         private readonly Options.DebuggerOptions _debuggerOptions;
         private readonly Options.ProfileOptions _profileOptions;
@@ -83,12 +89,14 @@ namespace VSRAD.Package.ProjectSystem.Macros
             IProjectProperties projectProperties,
             MacroEvaluatorTransientValues transientValues,
             AsyncLazy<IReadOnlyDictionary<string, string>> remoteEnvironment,
+            AsyncLazy<OSPlatform> remotePlatform,
             Options.DebuggerOptions debuggerOptions,
             Options.ProfileOptions profileOptions)
         {
             _projectProperties = projectProperties;
             _transientValues = transientValues;
             _remoteEnvironment = remoteEnvironment;
+            _remotePlaftorm = remotePlatform;
             _debuggerOptions = debuggerOptions;
             _profileOptions = profileOptions;
         }
@@ -119,6 +127,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.TargetProcessor:
                     if (!(await EvaluateAsync(_transientValues.TargetProcessor, evaluationChain)).TryGetResult(out value, out var error))
                         return error;
+                    break;
+                case RadMacros.RemotePlatform:
+                    var remotePlatform = await _remotePlaftorm.GetValueAsync();
+                    value = (remotePlatform == OSPlatform.Windows) ? "Windows" : (remotePlatform == OSPlatform.Linux) ? "Linux" : "";
                     break;
                 default:
                     string unevaluated = null;

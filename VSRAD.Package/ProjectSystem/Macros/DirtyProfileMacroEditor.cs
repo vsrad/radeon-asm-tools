@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -33,10 +34,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var transients = GetMacroTransients();
-            var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
+            var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, RemotePlatform, _project.Options.DebuggerOptions, _dirtyProfile);
 
-            var evalTransients = new ActionEvaluationTransients("", "", _dirtyProfile.General.RunActionsLocally,
-                System.Runtime.InteropServices.OSPlatform.Windows, _dirtyProfile.Actions);
+            var remotePlatform = await RemotePlatform.GetValueAsync();
+            var evalTransients = new ActionEvaluationTransients("", "", _dirtyProfile.General.RunActionsLocally, remotePlatform, _dirtyProfile.Actions);
 
             return await step.EvaluateAsync(evaluator, evalTransients, sourceAction);
         }
@@ -54,7 +55,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var transients = GetMacroTransients();
-            var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
+            var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, RemotePlatform, _project.Options.DebuggerOptions, _dirtyProfile);
 
             var editor = new MacroEditContext(macroName, currentValue, evaluator);
             ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
@@ -81,15 +82,15 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
         }
 
-        private AsyncLazy<IReadOnlyDictionary<string, string>> _remoteEnv;
+        private AsyncLazy<IReadOnlyDictionary<string, string>> _remoteEnvironment;
         private AsyncLazy<IReadOnlyDictionary<string, string>> RemoteEnvironment
         {
             get
             {
                 if (_dirtyProfile.General.RunActionsLocally)
                     return null;
-                if (_remoteEnv == null)
-                    _remoteEnv = new AsyncLazy<IReadOnlyDictionary<string, string>>(async () =>
+                if (_remoteEnvironment == null)
+                    _remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(async () =>
                     {
                         try
                         {
@@ -100,7 +101,30 @@ namespace VSRAD.Package.ProjectSystem.Macros
                             return new Dictionary<string, string>();
                         }
                     }, ThreadHelper.JoinableTaskFactory);
-                return _remoteEnv;
+                return _remoteEnvironment;
+            }
+        }
+
+        private AsyncLazy<OSPlatform> _remotePlatform;
+        private AsyncLazy<OSPlatform> RemotePlatform
+        {
+            get
+            {
+                if (_remotePlatform == null)
+                    _remotePlatform = new AsyncLazy<OSPlatform>(async () =>
+                    {
+                        if (_dirtyProfile.General.RunActionsLocally)
+                            return OSPlatform.Windows;
+                        try
+                        {
+                            return await _channel.GetRemotePlatformAsync(CancellationToken.None).ConfigureAwait(false);
+                        }
+                        catch (ConnectionFailedException)
+                        {
+                            return OSPlatform.Windows;
+                        }
+                    }, ThreadHelper.JoinableTaskFactory);
+                return _remotePlatform;
             }
         }
 
@@ -108,10 +132,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
         {
             return new MacroEvaluatorTransientValues(0,
                 sourcePath: "(ActiveEditorTabFullPath)",
-                debugPath: "(DebugStartupPath)",
-                targetProcessor: "(TargetProcessor)",
                 sourceDir: "(ActiveEditorTabDirectory)",
-                sourceFile: "(ActiveEditorTabFileName)");
+                sourceFile: "(ActiveEditorTabFileName)",
+                debugPath: "(DebugStartupPath)",
+                targetProcessor: "(TargetProcessor)");
         }
     }
 }

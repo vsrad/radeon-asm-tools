@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -179,21 +180,19 @@ namespace VSRAD.Package.ProjectSystem
                 var actionEnv = new ActionEnvironment(watches, breakTarget);
 
                 var projectProperties = _project.GetProjectProperties();
-                var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
-                    ? null
+                var runActionsLocally = _project.Options.Profile.General.RunActionsLocally;
+                var remoteEnvironment = runActionsLocally ? null
                     : new AsyncLazy<IReadOnlyDictionary<string, string>>(() => _channel.GetRemoteEnvironmentAsync(_runningActionTokenSource.Token), ThreadHelper.JoinableTaskFactory);
-                var remotePlatform = _project.Options.Profile.General.RunActionsLocally
-                    ? System.Runtime.InteropServices.OSPlatform.Windows
-                    : await _channel.GetRemotePlatformAsync(_runningActionTokenSource.Token);
-
-                var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
+                var remotePlatform = new AsyncLazy<OSPlatform>(
+                    () => runActionsLocally ? Task.FromResult(OSPlatform.Windows) : _channel.GetRemotePlatformAsync(_runningActionTokenSource.Token), ThreadHelper.JoinableTaskFactory);
+                var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, remotePlatform, _project.Options.DebuggerOptions, _project.Options.Profile);
 
                 var generalResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);
                 if (!generalResult.TryGetResult(out var general, out var evalError))
                     return evalError;
 
                 var actionTransients = new Options.ActionEvaluationTransients(general.LocalWorkDir, general.RemoteWorkDir, general.RunActionsLocally,
-                    remotePlatform, _project.Options.Profile.Actions);
+                    await remotePlatform.GetValueAsync(), _project.Options.Profile.Actions);
                 var evalResult = await action.EvaluateAsync(evaluator, actionTransients);
                 if (!evalResult.TryGetResult(out action, out evalError))
                     return evalError;

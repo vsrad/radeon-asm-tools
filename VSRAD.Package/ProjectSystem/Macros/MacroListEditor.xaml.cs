@@ -48,7 +48,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.ActiveSourceFileLine, "<line number under the cursor>", userDefined: false),
             new MacroItem(RadMacros.DebugAppArgs, "<app args, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.DebugBreakArgs, "<break args, set in visualizer>", userDefined: false),
-            new MacroItem(RadMacros.TargetProcessor, "<target processor, set in toolbar>", userDefined: false)
+            new MacroItem(RadMacros.TargetProcessor, "<target processor, set in toolbar>", userDefined: false),
+            new MacroItem(RadMacros.RemotePlatform, "<server platform, Windows or Linux>", userDefined: false)
         };
 
         public ICommand DeleteMacroCommand { get; }
