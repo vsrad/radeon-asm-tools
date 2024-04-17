@@ -10,7 +10,7 @@ namespace VSRAD.DebugServer
 {
     public sealed class Server
     {
-        public static readonly Version MinimumClientVersion = new Version("2024.3.3");
+        public static readonly Version MinimumClientVersion = new Version("2024.04.18");
 
         private readonly SemaphoreSlim _commandExecutionLock = new SemaphoreSlim(1, 1);
         private readonly TcpListener _listener;

@@ -71,6 +71,6 @@ namespace VSRAD.Package
 
         public const string ToolbarIconStripResourcePackUri = "pack://application:,,,/RadeonAsmDebugger;component/Resources/DebugVisualizerWindowCommand.png";
         public const string CurrentStatementIconResourcePackUri = "pack://application:,,,/RadeonAsmDebugger;component/Resources/CurrentStatement.png";
-        public static readonly Version MinimalRequiredServerVersion = new Version("2024.3.3");
+        public static readonly Version MinimalRequiredServerVersion = new Version("2024.04.18");
     };
 }
